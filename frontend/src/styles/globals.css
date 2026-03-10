@@ -73,3 +73,51 @@
     scrollbar-width: none;
   }
 }
+
+/* ── SweetAlert2 overrides ──────────────────────────────────── */
+.swal-popup {
+  border-radius: 1.25rem !important;
+  font-family: inherit !important;
+  padding: 1.75rem !important;
+}
+.swal2-title {
+  font-size: 1.125rem !important;
+  font-weight: 700 !important;
+  color: #18181b !important;
+}
+.swal2-html-container {
+  font-size: 0.875rem !important;
+  color: #52525b !important;
+}
+.swal-btn-confirm {
+  background: #7c3aed !important;
+  color: #fff !important;
+  border-radius: 0.75rem !important;
+  padding: 0.5rem 1.25rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  border: none !important;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.swal-btn-confirm:hover { background: #6d28d9 !important; }
+.swal-btn-confirm:focus { outline: none; box-shadow: 0 0 0 3px rgba(124,58,237,.3) !important; }
+.swal-btn-cancel {
+  background: #f4f4f5 !important;
+  color: #3f3f46 !important;
+  border-radius: 0.75rem !important;
+  padding: 0.5rem 1.25rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  border: none !important;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.swal-btn-cancel:hover { background: #e4e4e7 !important; }
+
+/* ── Print styles for receipts ─────────────────────────────── */
+@media print {
+  body > *:not(.print-area) { display: none !important; }
+  .print-area { display: block !important; }
+  .no-print { display: none !important; }
+}

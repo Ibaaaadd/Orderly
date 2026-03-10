@@ -10,6 +10,7 @@ const categoryRoutes = require('./routes/categoryRoutes')
 const menuRoutes     = require('./routes/menuRoutes')
 const orderRoutes    = require('./routes/orderRoutes')
 const paymentRoutes  = require('./routes/paymentRoutes')
+const reportRoutes   = require('./routes/reportRoutes')
 const { errorHandler } = require('./middleware/errorHandler')
 
 const app = express()
@@ -33,14 +34,27 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // ── Rate limiting ─────────────────────────────────────────────────
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max:      200,
-  standardHeaders: true,
-  legacyHeaders:   false,
-  message: { success: false, message: 'Terlalu banyak permintaan, coba lagi nanti.' },
-})
-app.use('/api', limiter)
+// In development, disable rate limiting entirely.
+// In production, apply a generous limit (500 req / 15 min) to all /api routes,
+// and a tighter limit (30 req / 15 min) only on order-creation to prevent abuse.
+if (process.env.NODE_ENV === 'production') {
+  const globalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max:      500,
+    standardHeaders: true,
+    legacyHeaders:   false,
+    message: { success: false, message: 'Terlalu banyak permintaan, coba lagi nanti.' },
+  })
+  const orderLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max:      30,
+    standardHeaders: true,
+    legacyHeaders:   false,
+    message: { success: false, message: 'Terlalu banyak permintaan, coba lagi nanti.' },
+  })
+  app.use('/api', globalLimiter)
+  app.use('/api/orders', orderLimiter)
+}
 
 // ── Health check ──────────────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ status: 'ok', ts: new Date() }))
@@ -50,6 +64,7 @@ app.use('/api/categories', categoryRoutes)
 app.use('/api/menus',      menuRoutes)
 app.use('/api/orders',     orderRoutes)
 app.use('/api/payments',   paymentRoutes)
+app.use('/api/reports',    reportRoutes)
 
 // ── 404 handler ───────────────────────────────────────────────────
 app.use((_req, res) => {

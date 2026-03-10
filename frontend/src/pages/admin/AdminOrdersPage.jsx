@@ -1,7 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, Printer } from 'lucide-react'
 import * as adminService from '../../services/adminService'
 import { formatPrice } from '../../utils/formatPrice'
+import DataTable from '../../components/ui/DataTable'
+import Receipt from '../../components/ui/Receipt'
+import { toast } from '../../utils/swal'
+import orderService from '../../services/orderService'
 
 const STATUS_STYLES = {
   pending:   'bg-yellow-50 text-yellow-700 border border-yellow-200',
@@ -24,9 +28,11 @@ function formatDate(iso) {
 }
 
 export default function AdminOrdersPage() {
-  const [orders, setOrders]   = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError]     = useState('')
+  const [orders, setOrders]       = useState([])
+  const [loading, setLoading]     = useState(true)
+  const [error, setError]         = useState('')
+  const [receipt, setReceipt]     = useState(null)
+  const [loadingReceipt, setLoadingReceipt] = useState(null)
 
   const load = useCallback(async () => {
     try {
@@ -43,13 +49,69 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     load()
-    // Auto-refresh every 30 seconds
     const timer = setInterval(load, 30_000)
     return () => clearInterval(timer)
   }, [load])
 
+  async function openReceipt(order) {
+    if (Array.isArray(order.items) && order.items.length > 0) {
+      setReceipt(order)
+      return
+    }
+    try {
+      setLoadingReceipt(order.id)
+      const res = await orderService.getOrder(order.id)
+      setReceipt(res.data)
+    } catch {
+      toast('Gagal memuat detail pesanan', 'error')
+    } finally {
+      setLoadingReceipt(null)
+    }
+  }
+
+  const columns = [
+    {
+      key: 'id', label: 'ID',
+      className: 'font-mono text-xs text-surface-400',
+      render: (row) => `#${row.id}`,
+    },
+    {
+      key: 'customer_name', label: 'Pelanggan',
+      className: 'font-medium text-surface-800',
+    },
+    {
+      key: 'created_at', label: 'Waktu',
+      className: 'text-surface-500 whitespace-nowrap',
+      render: (row) => formatDate(row.created_at),
+    },
+    {
+      key: 'items', label: 'Item',
+      className: 'text-surface-500 max-w-[200px]',
+      render: (row) =>
+        Array.isArray(row.items)
+          ? <span className="truncate block">{row.items.map((i) => `${i.name} ×${i.quantity}`).join(', ')}</span>
+          : '—',
+    },
+    {
+      key: 'total_price', label: 'Total',
+      headerClassName: 'text-right',
+      className: 'text-right font-semibold text-surface-800 whitespace-nowrap',
+      render: (row) => formatPrice(Number(row.total_price)),
+    },
+    {
+      key: 'status', label: 'Status',
+      headerClassName: 'text-center',
+      className: 'text-center',
+      render: (row) => (
+        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_STYLES[row.status] ?? 'bg-surface-100 text-surface-600'}`}>
+          {STATUS_LABELS[row.status] ?? row.status}
+        </span>
+      ),
+    },
+  ]
+
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-surface-800">Pesanan</h1>
         <button
@@ -68,57 +130,31 @@ export default function AdminOrdersPage() {
         </div>
       )}
 
-      {loading && orders.length === 0 ? (
-        <div className="text-center py-16 text-surface-400">Memuat…</div>
-      ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-surface-200 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-surface-50 border-b border-surface-200">
-              <tr>
-                <th className="text-left px-4 py-3 font-semibold text-surface-600">ID Pesanan</th>
-                <th className="text-left px-4 py-3 font-semibold text-surface-600">Waktu</th>
-                <th className="text-left px-4 py-3 font-semibold text-surface-600">Items</th>
-                <th className="text-right px-4 py-3 font-semibold text-surface-600">Total</th>
-                <th className="text-center px-4 py-3 font-semibold text-surface-600">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-surface-100">
-              {orders.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="text-center py-10 text-surface-400">
-                    Belum ada pesanan
-                  </td>
-                </tr>
-              )}
-              {orders.map((order) => (
-                <tr key={order.id} className="hover:bg-surface-50 transition-colors">
-                  <td className="px-4 py-3 font-mono text-xs text-surface-500">
-                    #{order.id}
-                  </td>
-                  <td className="px-4 py-3 text-surface-600">
-                    {formatDate(order.created_at)}
-                  </td>
-                  <td className="px-4 py-3 text-surface-600">
-                    {Array.isArray(order.items)
-                      ? order.items.map((i) => `${i.name} ×${i.quantity}`).join(', ')
-                      : '—'}
-                  </td>
-                  <td className="px-4 py-3 text-right font-semibold text-surface-800">
-                    {formatPrice(Number(order.total_price))}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span
-                      className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold
-                        ${STATUS_STYLES[order.status] ?? 'bg-surface-100 text-surface-600'}`}
-                    >
-                      {STATUS_LABELS[order.status] ?? order.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <DataTable
+        columns={columns}
+        data={orders}
+        loading={loading}
+        pageSize={10}
+        searchKeys={['customer_name']}
+        emptyText="Belum ada pesanan"
+        actions={(row) => (
+          <button
+            onClick={() => openReceipt(row)}
+            disabled={loadingReceipt === row.id}
+            title="Lihat & Cetak Struk"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-surface-200 text-surface-600 hover:bg-primary-50 hover:text-primary-700 hover:border-primary-200 transition-colors disabled:opacity-40"
+          >
+            {loadingReceipt === row.id
+              ? <RefreshCw size={12} className="animate-spin" />
+              : <Printer size={12} />
+            }
+            Struk
+          </button>
+        )}
+      />
+
+      {receipt && (
+        <Receipt order={receipt} onClose={() => setReceipt(null)} />
       )}
     </div>
   )

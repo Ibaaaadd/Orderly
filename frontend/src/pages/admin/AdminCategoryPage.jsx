@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { Plus, Pencil, Trash2, X } from 'lucide-react'
 import * as adminService from '../../services/adminService'
+import { confirmDelete, toast, showError } from '../../utils/swal'
 
 export default function AdminCategoryPage() {
   const [categories, setCategories] = useState([])
@@ -50,8 +51,10 @@ export default function AdminCategoryPage() {
       setSaving(true)
       if (editing) {
         await adminService.updateCategory(editing.id, { name: name.trim() })
+        toast('Kategori berhasil diperbarui')
       } else {
         await adminService.createCategory({ name: name.trim() })
+        toast('Kategori berhasil ditambahkan')
       }
       setShowModal(false)
       load()
@@ -63,13 +66,18 @@ export default function AdminCategoryPage() {
   }
 
   async function handleDelete(id) {
-    if (!confirm('Hapus kategori ini? Menu yang terkait akan kehilangan kategorinya.')) return
+    const result = await confirmDelete(
+      'Hapus kategori ini?',
+      'Menu yang terkait akan kehilangan kategorinya.'
+    )
+    if (!result.isConfirmed) return
     setDeletingId(id)
     try {
       await adminService.deleteCategory(id)
       setCategories((prev) => prev.filter((c) => c.id !== id))
+      toast('Kategori berhasil dihapus')
     } catch (e) {
-      alert(e.message)
+      showError('Gagal', e.message)
     } finally {
       setDeletingId(null)
     }

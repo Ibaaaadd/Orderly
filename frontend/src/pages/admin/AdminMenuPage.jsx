@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { Plus, Pencil, Trash2, X, Check } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Check, Search } from 'lucide-react'
 import * as adminService from '../../services/adminService'
 import { formatPrice } from '../../utils/formatPrice'
+import { confirmDelete, toast, showError } from '../../utils/swal'
+import DataTable from '../../components/ui/DataTable'
 
 const EMPTY_FORM = {
   name: '',
@@ -80,8 +82,10 @@ export default function AdminMenuPage() {
       setSaving(true)
       if (editing) {
         await adminService.updateMenu(editing.id, payload)
+        toast('Menu berhasil diperbarui')
       } else {
         await adminService.createMenu(payload)
+        toast('Menu berhasil ditambahkan')
       }
       setShowModal(false)
       load()
@@ -93,13 +97,15 @@ export default function AdminMenuPage() {
   }
 
   async function handleDelete(id) {
-    if (!confirm('Hapus menu ini?')) return
+    const result = await confirmDelete('Hapus menu ini?')
+    if (!result.isConfirmed) return
     setDeletingId(id)
     try {
       await adminService.deleteMenu(id)
       setMenus((prev) => prev.filter((m) => m.id !== id))
+      toast('Menu berhasil dihapus')
     } catch (e) {
-      alert(e.message)
+      showError('Gagal', e.message)
     } finally {
       setDeletingId(null)
     }

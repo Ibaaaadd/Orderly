@@ -14,3 +14,8 @@ export const deleteMenu = (id) => api.delete(`/menus/${id}`)
 
 // ─── Orders ───────────────────────────────────────────────────
 export const getOrders = () => api.get('/orders')
+
+// ─── Reports ──────────────────────────────────────────────────
+export const getReportSummary   = ()     => api.get('/reports/summary')
+export const getMonthlyReport   = (year) => api.get('/reports/monthly', { params: { year } })
+export const getTopMenus        = (limit = 10) => api.get('/reports/top-menus', { params: { limit } })

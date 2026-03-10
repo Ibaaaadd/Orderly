@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { lazy, Suspense } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 import Navbar from '../components/layout/Navbar.jsx'
 import AdminLayout from '../components/layout/AdminLayout.jsx'
@@ -8,9 +8,25 @@ import CartPage from '../pages/CartPage.jsx'
 import PaymentPage from '../pages/PaymentPage.jsx'
 import SuccessPage from '../pages/SuccessPage.jsx'
 import OrdersPage from '../pages/OrdersPage.jsx'
-import AdminMenuPage from '../pages/admin/AdminMenuPage.jsx'
-import AdminCategoryPage from '../pages/admin/AdminCategoryPage.jsx'
-import AdminOrdersPage from '../pages/admin/AdminOrdersPage.jsx'
+
+// Lazy-load admin pages to split heavy chart / print libraries into a separate chunk
+const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage.jsx'))
+const AdminMenuPage      = lazy(() => import('../pages/admin/AdminMenuPage.jsx'))
+const AdminCategoryPage  = lazy(() => import('../pages/admin/AdminCategoryPage.jsx'))
+const AdminOrdersPage    = lazy(() => import('../pages/admin/AdminOrdersPage.jsx'))
+const AdminReportPage    = lazy(() => import('../pages/admin/AdminReportPage.jsx'))
+
+function AdminFallback() {
+  return (
+    <div className="flex items-center justify-center h-40 text-surface-400 text-sm">
+      <svg className="animate-spin h-5 w-5 mr-2 text-primary-400" viewBox="0 0 24 24" fill="none">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+      </svg>
+      Memuat…
+    </div>
+  )
+}
 
 /**
  * Layout wrapper — shared Navbar + Container around all routes.
@@ -25,7 +41,7 @@ function RootLayout({ children }) {
 }
 
 // Route-level layouts are handled via Outlet in react-router v6
-import { Outlet, Navigate } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 
 function Layout() {
   return (
@@ -51,10 +67,11 @@ export const router = createBrowserRouter([
     path: '/admin',
     element: <AdminLayout />,
     children: [
-      { index: true,              element: <Navigate to="/admin/menus" replace /> },
-      { path: 'menus',       element: <AdminMenuPage /> },
-      { path: 'categories',  element: <AdminCategoryPage /> },
-      { path: 'orders',      element: <AdminOrdersPage /> },
+      { index: true,         element: <Suspense fallback={<AdminFallback />}><AdminDashboardPage /></Suspense> },
+      { path: 'menus',       element: <Suspense fallback={<AdminFallback />}><AdminMenuPage /></Suspense> },
+      { path: 'categories',  element: <Suspense fallback={<AdminFallback />}><AdminCategoryPage /></Suspense> },
+      { path: 'orders',      element: <Suspense fallback={<AdminFallback />}><AdminOrdersPage /></Suspense> },
+      { path: 'reports',     element: <Suspense fallback={<AdminFallback />}><AdminReportPage /></Suspense> },
     ],
   },
 ])
