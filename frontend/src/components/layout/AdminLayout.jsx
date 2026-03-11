@@ -12,7 +12,7 @@ const navItems = [
 
 export default function AdminLayout() {
   return (
-    <div className="flex min-h-screen bg-surface-50">
+    <div className="flex h-screen overflow-hidden bg-surface-50">
       {/* Sidebar */}
       <aside className="w-56 shrink-0 bg-white border-r border-surface-200 flex flex-col">
         <div className="flex items-center gap-2 h-16 px-5 border-b border-surface-200">

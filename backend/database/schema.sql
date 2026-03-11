@@ -25,6 +25,7 @@ CREATE TABLE menus (
   price        NUMERIC(12, 0) NOT NULL CHECK (price >= 0),
   image_url    TEXT,
   is_available BOOLEAN NOT NULL DEFAULT TRUE,
+  levels       JSONB   NOT NULL DEFAULT '[]',
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -56,7 +57,8 @@ CREATE TABLE order_items (
   menu_id   INT           REFERENCES menus(id) ON DELETE SET NULL,
   price     NUMERIC(12,0) NOT NULL,
   qty       INT           NOT NULL CHECK (qty > 0),
-  subtotal  NUMERIC(14,0) NOT NULL
+  subtotal  NUMERIC(14,0) NOT NULL,
+  level     VARCHAR(100)
 );
 
 CREATE INDEX idx_order_items_order ON order_items(order_id);

@@ -45,11 +45,13 @@ const useCartStore = create(
       /** Add item or increment quantity if already in cart */
       addItem: (menu) =>
         set((state) => {
-          const existing = state.items.find((i) => i.id === menu.id)
+          const level   = menu.level || ''
+          const cartKey = `${menu.id}::${level}`
+          const existing = state.items.find((i) => i.cartKey === cartKey)
           let items
           if (existing) {
             items = state.items.map((i) =>
-              i.id === menu.id
+              i.cartKey === cartKey
                 ? { ...i, qty: i.qty + 1, subtotal: (i.qty + 1) * Number(i.price) }
                 : i
             )
@@ -58,10 +60,13 @@ const useCartStore = create(
             items = [
               ...state.items,
               {
+                cartKey,
                 id:        menu.id,
                 name:      menu.name,
                 price,
                 image_url: menu.image_url,
+                levels:    Array.isArray(menu.levels) ? menu.levels : [],
+                level:     level || undefined,
                 qty:       1,
                 subtotal:  price,
               },
@@ -71,11 +76,11 @@ const useCartStore = create(
         }),
 
       /** Decrease quantity or remove if qty reaches 0 */
-      decreaseItem: (id) =>
+      decreaseItem: (cartKey) =>
         set((state) => {
           const items = state.items
             .map((i) =>
-              i.id === id
+              i.cartKey === cartKey
                 ? { ...i, qty: i.qty - 1, subtotal: (i.qty - 1) * Number(i.price) }
                 : i
             )
@@ -84,9 +89,36 @@ const useCartStore = create(
         }),
 
       /** Completely remove an item from cart */
-      removeItem: (id) =>
+      removeItem: (cartKey) =>
         set((state) => {
-          const items = state.items.filter((i) => i.id !== id)
+          const items = state.items.filter((i) => i.cartKey !== cartKey)
+          return { items, total: calcTotal(items) }
+        }),
+
+      /** Change the spice level of a cart item (keeps qty) */
+      changeLevel: (cartKey, newLevel) =>
+        set((state) => {
+          const item = state.items.find((i) => i.cartKey === cartKey)
+          if (!item) return {}
+          const newCartKey = `${item.id}::${newLevel}`
+          // If an entry with the new level already exists, merge qty into it
+          const existing = state.items.find((i) => i.cartKey === newCartKey)
+          let items
+          if (existing) {
+            items = state.items
+              .filter((i) => i.cartKey !== cartKey)
+              .map((i) =>
+                i.cartKey === newCartKey
+                  ? { ...i, qty: i.qty + item.qty, subtotal: (i.qty + item.qty) * Number(i.price) }
+                  : i
+              )
+          } else {
+            items = state.items.map((i) =>
+              i.cartKey === cartKey
+                ? { ...i, cartKey: newCartKey, level: newLevel || undefined }
+                : i
+            )
+          }
           return { items, total: calcTotal(items) }
         }),
 
@@ -95,7 +127,7 @@ const useCartStore = create(
     }),
     {
       name: 'orderly-cart', // localStorage key
-      version: 4,           // bumped: added tableNumber
+      version: 5,           // bumped: cartKey + level support
       partialize: (state) => ({
         items:         state.items,
         total:         state.total,

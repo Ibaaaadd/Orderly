@@ -22,9 +22,9 @@ const orderModel = {
       // Insert items
       for (const item of items) {
         await client.query(
-          `INSERT INTO order_items (order_id, menu_id, price, qty, subtotal)
-           VALUES ($1, $2, $3, $4, $5)`,
-          [order.id, item.menu_id, item.price, item.qty, item.subtotal]
+          `INSERT INTO order_items (order_id, menu_id, price, qty, subtotal, level)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [order.id, item.menu_id, item.price, item.qty, item.subtotal, item.level || null]
         )
       }
 

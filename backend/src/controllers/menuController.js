@@ -36,7 +36,7 @@ async function getMenuById(req, res, next) {
  */
 async function createMenu(req, res, next) {
   try {
-    const { category_id, name, price, image_url, is_available } = req.body
+    const { category_id, name, price, image_url, is_available, levels } = req.body
     if (!name || !name.trim()) {
       return res.status(400).json({ success: false, message: 'Nama menu wajib diisi' })
     }
@@ -44,7 +44,10 @@ async function createMenu(req, res, next) {
     if (isNaN(numericPrice) || numericPrice < 0) {
       return res.status(400).json({ success: false, message: 'Harga tidak valid' })
     }
-    const menu = await menuModel.create({ category_id, name: name.trim(), price: numericPrice, image_url, is_available })
+    if (levels !== undefined && !Array.isArray(levels)) {
+      return res.status(400).json({ success: false, message: 'levels harus berupa array' })
+    }
+    const menu = await menuModel.create({ category_id, name: name.trim(), price: numericPrice, image_url, is_available, levels: levels || [] })
     res.status(201).json({ success: true, data: menu })
   } catch (err) {
     next(err)
@@ -64,6 +67,9 @@ async function updateMenu(req, res, next) {
         return res.status(400).json({ success: false, message: 'Harga tidak valid' })
       }
       fields.price = n
+    }
+    if (fields.levels !== undefined && !Array.isArray(fields.levels)) {
+      return res.status(400).json({ success: false, message: 'levels harus berupa array' })
     }
     const menu = await menuModel.update(id, fields)
     if (!menu) {

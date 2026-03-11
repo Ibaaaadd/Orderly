@@ -68,7 +68,7 @@ export default function CartDrawer() {
         customer_phone: customerPhone.trim() || undefined,
         table_number:   tableNumber.trim() || undefined,
         order_type:     orderType,
-        items: items.map((i) => ({ menu_id: i.id, qty: i.qty })),
+        items: items.map((i) => ({ menu_id: i.id, qty: i.qty, ...(i.level ? { level: i.level } : {}) })),
       })
       await paymentService.createPayment(order.data.id)
       clearCart()

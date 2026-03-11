@@ -9,7 +9,7 @@ const menuModel = {
     const params = []
     let sql = `
       SELECT
-        m.id, m.name, m.price, m.image_url, m.is_available,
+        m.id, m.name, m.price, m.image_url, m.is_available, m.levels,
         c.id AS category_id, c.name AS category_name
       FROM menus m
       LEFT JOIN categories c ON c.id = m.category_id
@@ -34,18 +34,18 @@ const menuModel = {
   },
 
   /** Create a new menu item */
-  create: async ({ category_id, name, price, image_url, is_available }) => {
+  create: async ({ category_id, name, price, image_url, is_available, levels }) => {
     const res = await query(
-      `INSERT INTO menus (category_id, name, price, image_url, is_available)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO menus (category_id, name, price, image_url, is_available, levels)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [category_id || null, name, price, image_url || null, is_available !== false]
+      [category_id || null, name, price, image_url || null, is_available !== false, JSON.stringify(levels || [])]
     )
     return res.rows[0]
   },
 
   /** Update an existing menu item (only provided fields) */
-  update: async (id, { category_id, name, price, image_url, is_available }) => {
+  update: async (id, { category_id, name, price, image_url, is_available, levels }) => {
     const fields = []
     const values = []
     let idx = 1
@@ -55,6 +55,7 @@ const menuModel = {
     if (price        !== undefined) { fields.push(`price = $${idx++}`)        ; values.push(price)        }
     if (image_url    !== undefined) { fields.push(`image_url = $${idx++}`)    ; values.push(image_url)    }
     if (is_available !== undefined) { fields.push(`is_available = $${idx++}`) ; values.push(is_available) }
+    if (levels       !== undefined) { fields.push(`levels = $${idx++}`)       ; values.push(JSON.stringify(levels)) }
 
     if (!fields.length) return menuModel.findById(id)
 

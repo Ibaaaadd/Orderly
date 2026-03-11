@@ -11,6 +11,7 @@ const EMPTY_FORM = {
   price: '',
   image_url: '',
   is_available: true,
+  levels: [],
 }
 
 export default function AdminMenuPage() {
@@ -24,6 +25,7 @@ export default function AdminMenuPage() {
   const [saving, setSaving]         = useState(false)
   const [formError, setFormError]   = useState('')
   const [deletingId, setDeletingId] = useState(null)
+  const [newLevelInput, setNewLevelInput] = useState('')
 
   const load = useCallback(async () => {
     try {
@@ -47,6 +49,7 @@ export default function AdminMenuPage() {
   function openCreate() {
     setEditing(null)
     setForm(EMPTY_FORM)
+    setNewLevelInput('')
     setFormError('')
     setShowModal(true)
   }
@@ -59,7 +62,9 @@ export default function AdminMenuPage() {
       price:        String(menu.price),
       image_url:    menu.image_url ?? '',
       is_available: menu.is_available,
+      levels:       Array.isArray(menu.levels) ? [...menu.levels] : [],
     })
+    setNewLevelInput('')
     setFormError('')
     setShowModal(true)
   }
@@ -77,6 +82,7 @@ export default function AdminMenuPage() {
       price:        Number(form.price),
       image_url:    form.image_url.trim() || null,
       is_available: form.is_available,
+      levels:       form.levels,
     }
     try {
       setSaving(true)
@@ -287,6 +293,60 @@ export default function AdminMenuPage() {
                 <label htmlFor="is_available" className="text-sm text-surface-700 font-medium">
                   Menu tersedia
                 </label>
+              </div>
+
+              {/* Levels */}
+              <div>
+                <label className="block text-sm font-medium text-surface-700 mb-1">
+                  Opsi Level <span className="text-surface-400 font-normal">(opsional, contoh: Pedas, Level 2)</span>
+                </label>
+                {form.levels.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {form.levels.map((lvl, i) => (
+                      <span key={i} className="flex items-center gap-1 bg-orange-50 border border-orange-200 text-orange-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                        {lvl}
+                        <button
+                          type="button"
+                          onClick={() => setForm({ ...form, levels: form.levels.filter((_, j) => j !== i) })}
+                          className="text-orange-400 hover:text-orange-700 leading-none"
+                        >
+                          <X size={11} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <input
+                    className="flex-1 border border-surface-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+                    value={newLevelInput}
+                    onChange={(e) => setNewLevelInput(e.target.value)}
+                    placeholder="Ketik lalu tekan + atau Enter"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        const val = newLevelInput.trim()
+                        if (val && !form.levels.includes(val)) {
+                          setForm({ ...form, levels: [...form.levels, val] })
+                          setNewLevelInput('')
+                        }
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const val = newLevelInput.trim()
+                      if (val && !form.levels.includes(val)) {
+                        setForm({ ...form, levels: [...form.levels, val] })
+                        setNewLevelInput('')
+                      }
+                    }}
+                    className="px-3 py-2 bg-primary-600 text-white rounded-xl text-sm font-semibold hover:bg-primary-700 transition-colors"
+                  >
+                    <Plus size={15} />
+                  </button>
+                </div>
               </div>
 
               <div className="flex gap-3 pt-2">

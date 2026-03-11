@@ -49,7 +49,17 @@ async function createOrder(req, res, next) {
         })
       }
 
-      enriched.push({ menu_id: menu.id, price: menu.price, qty })
+      // Validate level if menu has levels configured
+      if (Array.isArray(menu.levels) && menu.levels.length > 0) {
+        if (!item.level || !menu.levels.includes(item.level)) {
+          return res.status(400).json({
+            success: false,
+            message: `Silakan pilih level untuk menu "${menu.name}"`,
+          })
+        }
+      }
+
+      enriched.push({ menu_id: menu.id, price: menu.price, qty, level: item.level || null })
     }
 
     // ── Calculate total ────────────────────────────────────────────
