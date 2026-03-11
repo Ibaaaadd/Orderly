@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { RefreshCw, Printer, Clock, CheckCircle2, XCircle, LayoutGrid } from 'lucide-react'
+import { RefreshCw, Printer, Clock, CheckCircle2, XCircle, LayoutGrid, UtensilsCrossed, ShoppingBag, Users } from 'lucide-react'
 import * as adminService from '../../services/adminService'
 import { formatPrice } from '../../utils/formatPrice'
 import DataTable from '../../components/ui/DataTable'
@@ -13,10 +13,26 @@ const STATUS_STYLES = {
   cancelled: 'bg-red-50 text-red-600 border border-red-200',
 }
 
+const STATUS_ICONS = {
+  pending:   Clock,
+  paid:      CheckCircle2,
+  cancelled: XCircle,
+}
+
 const STATUS_LABELS = {
   pending:   'Menunggu',
   paid:      'Lunas',
   cancelled: 'Dibatalkan',
+}
+
+const ORDER_TYPE_STYLES = {
+  dine_in:  'bg-blue-50 text-blue-700 border border-blue-200',
+  takeaway: 'bg-purple-50 text-purple-700 border border-purple-200',
+}
+
+const ORDER_TYPE_LABELS = {
+  dine_in:  'Dine In',
+  takeaway: 'Takeaway',
 }
 
 function formatDate(iso) {
@@ -89,42 +105,75 @@ export default function AdminOrdersPage() {
 
   const columns = [
     {
-      key: 'id', label: 'ID',
-      className: 'font-mono text-xs text-surface-400',
-      render: (row) => `#${row.id}`,
+      key: 'id', label: 'Pesanan',
+      render: (row) => (
+        <div className="flex flex-col gap-1">
+          <span className="font-mono text-xs font-semibold text-primary-600 bg-primary-50 border border-primary-100 px-2 py-0.5 rounded-lg w-fit">
+            #{row.id}
+          </span>
+          <span className="text-xs text-surface-400">{formatDate(row.created_at)}</span>
+        </div>
+      ),
     },
     {
       key: 'customer_name', label: 'Pelanggan',
-      className: 'font-medium text-surface-800',
-    },
-    {
-      key: 'created_at', label: 'Waktu',
-      className: 'text-surface-500 whitespace-nowrap',
-      render: (row) => formatDate(row.created_at),
+      render: (row) => (
+        <div className="flex flex-col gap-1 min-w-[140px]">
+          <span className="font-semibold text-surface-800 text-sm">{row.customer_name}</span>
+          <div className="flex flex-wrap items-center gap-1">
+            {row.order_type && (
+              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11px] font-medium ${ORDER_TYPE_STYLES[row.order_type] ?? 'bg-surface-100 text-surface-600'}`}>
+                {row.order_type === 'dine_in' ? <UtensilsCrossed size={10} /> : <ShoppingBag size={10} />}
+                {ORDER_TYPE_LABELS[row.order_type] ?? row.order_type}
+              </span>
+            )}
+            {row.table_number && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11px] font-medium bg-surface-100 text-surface-600">
+                <Users size={10} /> Meja {row.table_number}
+              </span>
+            )}
+          </div>
+        </div>
+      ),
     },
     {
       key: 'items', label: 'Item',
-      className: 'text-surface-500 max-w-[200px]',
-      render: (row) =>
-        Array.isArray(row.items)
-          ? <span className="truncate block">{row.items.map((i) => `${i.name} ×${i.quantity}`).join(', ')}</span>
-          : '—',
+      className: 'max-w-[220px]',
+      render: (row) => {
+        if (!Array.isArray(row.items) || row.items.length === 0) return <span className="text-surface-300">—</span>
+        return (
+          <div className="flex flex-col gap-0.5">
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-surface-500">
+              {row.items.length} item
+            </span>
+            <span className="text-xs text-surface-400 truncate max-w-[200px]">
+              {row.items.map((i) => `${i.name} ×${i.quantity ?? i.qty}`).join(', ')}
+            </span>
+          </div>
+        )
+      },
     },
     {
       key: 'total_price', label: 'Total',
       headerClassName: 'text-right',
-      className: 'text-right font-semibold text-surface-800 whitespace-nowrap',
-      render: (row) => formatPrice(Number(row.total_price)),
+      className: 'text-right whitespace-nowrap',
+      render: (row) => (
+        <span className="font-bold text-surface-900 text-sm">{formatPrice(Number(row.total_price))}</span>
+      ),
     },
     {
       key: 'status', label: 'Status',
       headerClassName: 'text-center',
       className: 'text-center',
-      render: (row) => (
-        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_STYLES[row.status] ?? 'bg-surface-100 text-surface-600'}`}>
-          {STATUS_LABELS[row.status] ?? row.status}
-        </span>
-      ),
+      render: (row) => {
+        const Icon = STATUS_ICONS[row.status] ?? Clock
+        return (
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_STYLES[row.status] ?? 'bg-surface-100 text-surface-600'}`}>
+            <Icon size={11} />
+            {STATUS_LABELS[row.status] ?? row.status}
+          </span>
+        )
+      },
     },
   ]
 
