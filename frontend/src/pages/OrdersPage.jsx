@@ -1,7 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ClipboardList, ChevronRight, RefreshCw } from 'lucide-react'
+import { ClipboardList, ChevronRight, RefreshCw, Phone, Mail, UtensilsCrossed, ShoppingBag } from 'lucide-react'
 import Container from '../components/layout/Container.jsx'
 import Badge from '../components/ui/Badge.jsx'
 import { Spinner, SkeletonBox } from '../components/ui/Loader.jsx'
@@ -126,19 +126,43 @@ export default function OrdersPage() {
                   <p className="text-sm text-zinc-600 mt-0.5 font-medium truncate">
                     {order.customer_name}
                   </p>
+                  {/* Phone / Email */}
+                  {order.customer_phone && (
+                    <p className="flex items-center gap-1 text-xs text-zinc-400 mt-0.5 truncate">
+                      <Phone size={11} />
+                      {order.customer_phone}
+                    </p>
+                  )}
+                  {order.customer_email && (
+                    <p className="flex items-center gap-1 text-xs text-zinc-400 mt-0.5 truncate">
+                      <Mail size={11} />
+                      {order.customer_email}
+                    </p>
+                  )}
                   <div className="flex items-center justify-between mt-1.5">
                     <span className="text-primary-600 font-bold text-sm">
                       {formatPrice(order.total_price)}
                     </span>
-                    <span className="text-xs text-zinc-400">
-                      {new Date(order.created_at).toLocaleDateString('id-ID', {
-                        day:   '2-digit',
-                        month: 'short',
-                        year:  'numeric',
-                        hour:  '2-digit',
-                        minute:'2-digit',
-                      })}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {order.order_type === 'takeaway' ? (
+                        <span className="flex items-center gap-0.5 text-xs text-zinc-400">
+                          <ShoppingBag size={11} /> Bawa Pulang
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-0.5 text-xs text-zinc-400">
+                          <UtensilsCrossed size={11} /> Dine In
+                        </span>
+                      )}
+                      <span className="text-xs text-zinc-400">
+                        {new Date(order.created_at).toLocaleDateString('id-ID', {
+                          day:   '2-digit',
+                          month: 'short',
+                          year:  'numeric',
+                          hour:  '2-digit',
+                          minute:'2-digit',
+                        })}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <ChevronRight size={16} className="text-zinc-300 shrink-0" />

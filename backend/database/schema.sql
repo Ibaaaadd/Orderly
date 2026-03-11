@@ -34,6 +34,11 @@ CREATE INDEX idx_menus_category ON menus(category_id);
 CREATE TABLE orders (
   id                SERIAL PRIMARY KEY,
   customer_name     VARCHAR(200) NOT NULL,
+  customer_phone    VARCHAR(20),
+  customer_email    VARCHAR(200),
+  table_number      VARCHAR(20),
+  order_type        VARCHAR(20)  NOT NULL DEFAULT 'dine_in'
+                    CHECK (order_type IN ('dine_in', 'takeaway')),
   total_price       NUMERIC(14, 0) NOT NULL CHECK (total_price >= 0),
   status            VARCHAR(20)  NOT NULL DEFAULT 'pending'
                     CHECK (status IN ('pending', 'paid', 'cancelled')),

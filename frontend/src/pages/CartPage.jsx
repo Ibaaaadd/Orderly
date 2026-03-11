@@ -23,10 +23,19 @@ export default function CartPage() {
   const total        = useCartStore((s) => s.total)
   const customerName = useCartStore((s) => s.customerName)
   const setCustomerName = useCartStore((s) => s.setCustomerName)
+  const customerPhone = useCartStore((s) => s.customerPhone)
+  const setCustomerPhone = useCartStore((s) => s.setCustomerPhone)
+  const customerEmail = useCartStore((s) => s.customerEmail)
+  const setCustomerEmail = useCartStore((s) => s.setCustomerEmail)
+  const tableNumber  = useCartStore((s) => s.tableNumber)
+  const setTableNumber = useCartStore((s) => s.setTableNumber)
+  const orderType    = useCartStore((s) => s.orderType)
+  const setOrderType = useCartStore((s) => s.setOrderType)
   const clearCart    = useCartStore((s) => s.clearCart)
 
   const [loading,   setLoading]   = useState(false)
   const [nameError, setNameError] = useState('')
+  const [phoneError, setPhoneError] = useState('')
 
   const isEmpty = items.length === 0
 
@@ -36,11 +45,20 @@ export default function CartPage() {
       return
     }
     setNameError('')
+    if (customerPhone && !/^[0-9+\-\s]{6,20}$/.test(customerPhone.trim())) {
+      setPhoneError('Nomor telepon tidak valid')
+      return
+    }
+    setPhoneError('')
     setLoading(true)
 
     try {
       const order = await orderService.createOrder({
-        customer_name: customerName.trim(),
+        customer_name:  customerName.trim(),
+        customer_phone: customerPhone.trim() || undefined,
+        customer_email: customerEmail.trim() || undefined,
+        table_number:   tableNumber.trim() || undefined,
+        order_type:     orderType,
         items: items.map((i) => ({ menu_id: i.id, qty: i.qty })),
       })
       await paymentService.createPayment(order.data.id)
@@ -90,8 +108,8 @@ export default function CartPage() {
             </AnimatePresence>
           </div>
 
-          {/* Customer name */}
-          <div className="bg-white rounded-2xl shadow-soft border border-surface-100 p-4">
+          {/* Customer info */}
+          <div className="bg-white rounded-2xl shadow-soft border border-surface-100 p-4 space-y-4">
             <Input
               label="Nama Pelanggan"
               placeholder="Masukkan nama kamu..."
@@ -103,6 +121,60 @@ export default function CartPage() {
               error={nameError}
               fullWidth
             />
+            <Input
+              label="Nomor Telepon (opsional)"
+              placeholder="Contoh: 08123456789"
+              value={customerPhone}
+              onChange={(e) => {
+                setCustomerPhone(e.target.value)
+                if (phoneError) setPhoneError('')
+              }}
+              error={phoneError}
+              fullWidth
+            />
+            <Input
+              label="Email (opsional)"
+              placeholder="Contoh: nama@email.com"
+              value={customerEmail}
+              onChange={(e) => setCustomerEmail(e.target.value)}
+              fullWidth
+            />
+            <Input
+              label="Nomor Meja (opsional)"
+              placeholder="Contoh: 5"
+              value={tableNumber}
+              onChange={(e) => setTableNumber(e.target.value)}
+              fullWidth
+            />
+
+            {/* Order type toggle */}
+            <div>
+              <p className="text-sm font-semibold text-zinc-700 mb-2">Tipe Pesanan</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setOrderType('dine_in')}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-colors ${
+                    orderType === 'dine_in'
+                      ? 'bg-primary-500 text-white border-primary-500'
+                      : 'bg-white text-zinc-600 border-surface-200 hover:bg-surface-50'
+                  }`}
+                >
+                  🍽️ Makan di Tempat
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOrderType('takeaway')}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-colors ${
+                    orderType === 'takeaway'
+                      ? 'bg-primary-500 text-white border-primary-500'
+                      : 'bg-white text-zinc-600 border-surface-200 hover:bg-surface-50'
+                  }`}
+                >
+                  🥡 Bawa Pulang
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Summary */}

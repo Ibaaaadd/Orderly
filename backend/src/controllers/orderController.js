@@ -9,7 +9,7 @@ const { calculateTotal } = require('../utils/calculateTotal')
  */
 async function createOrder(req, res, next) {
   try {
-    const { customer_name, items } = req.body
+    const { customer_name, customer_phone, customer_email, table_number, order_type, items } = req.body
 
     // ── Input validation ──────────────────────────────────────────
     if (!customer_name || typeof customer_name !== 'string' || !customer_name.trim()) {
@@ -17,6 +17,12 @@ async function createOrder(req, res, next) {
     }
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ success: false, message: 'items tidak boleh kosong' })
+    }
+    if (order_type && !['dine_in', 'takeaway'].includes(order_type)) {
+      return res.status(400).json({ success: false, message: 'order_type tidak valid' })
+    }
+    if (customer_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer_email)) {
+      return res.status(400).json({ success: false, message: 'Format email tidak valid' })
     }
 
     // ── Validate & enrich items with current prices ───────────────
@@ -51,7 +57,11 @@ async function createOrder(req, res, next) {
 
     // ── Persist ────────────────────────────────────────────────────
     const order = await orderModel.create({
-      customer_name: customer_name.trim(),
+      customer_name:  customer_name.trim(),
+      customer_phone: customer_phone ? customer_phone.trim() : null,
+      customer_email: customer_email ? customer_email.trim() : null,
+      table_number:   table_number ? String(table_number).trim() : null,
+      order_type:     order_type || 'dine_in',
       total_price,
       items: enriched,
     })

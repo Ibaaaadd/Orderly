@@ -5,17 +5,17 @@ const { query, pool } = require('../config/db')
  */
 const orderModel = {
   /** Create order + items in a single transaction */
-  create: async ({ customer_name, total_price, items }) => {
+  create: async ({ customer_name, customer_phone, customer_email, table_number, order_type, total_price, items }) => {
     const client = await pool.connect()
     try {
       await client.query('BEGIN')
 
       // Insert order
       const orderRes = await client.query(
-        `INSERT INTO orders (customer_name, total_price, status)
-         VALUES ($1, $2, 'pending')
+        `INSERT INTO orders (customer_name, customer_phone, customer_email, table_number, order_type, total_price, status)
+         VALUES ($1, $2, $3, $4, $5, $6, 'pending')
          RETURNING *`,
-        [customer_name, total_price]
+        [customer_name, customer_phone || null, customer_email || null, table_number || null, order_type || 'dine_in', total_price]
       )
       const order = orderRes.rows[0]
 

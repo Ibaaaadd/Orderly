@@ -16,6 +16,10 @@ const useCartStore = create(
       items: [],
       total: 0,
       customerName: '',
+      customerPhone: '',
+      customerEmail: '',
+      tableNumber: '',
+      orderType: 'dine_in',
       isOpen: false,
 
       /** Open / close the cart drawer */
@@ -25,6 +29,18 @@ const useCartStore = create(
 
       /** Set customer name */
       setCustomerName: (name) => set({ customerName: name }),
+
+      /** Set customer phone */
+      setCustomerPhone: (phone) => set({ customerPhone: phone }),
+
+      /** Set customer email */
+      setCustomerEmail: (email) => set({ customerEmail: email }),
+
+      /** Set table number */
+      setTableNumber: (num) => set({ tableNumber: num }),
+
+      /** Set order type */
+      setOrderType: (type) => set({ orderType: type }),
 
       /** Add item or increment quantity if already in cart */
       addItem: (menu) =>
@@ -75,15 +91,19 @@ const useCartStore = create(
         }),
 
       /** Clear entire cart */
-      clearCart: () => set({ items: [], total: 0, customerName: '' }),
+      clearCart: () => set({ items: [], total: 0, customerName: '', customerPhone: '', customerEmail: '', tableNumber: '', orderType: 'dine_in' }),
     }),
     {
       name: 'orderly-cart', // localStorage key
-      version: 2,           // bump version to clear stale (string-price) persisted carts
+      version: 4,           // bumped: added tableNumber
       partialize: (state) => ({
-        items:        state.items,
-        total:        state.total,
-        customerName: state.customerName,
+        items:         state.items,
+        total:         state.total,
+        customerName:  state.customerName,
+        customerPhone: state.customerPhone,
+        customerEmail: state.customerEmail,
+        tableNumber:   state.tableNumber,
+        orderType:     state.orderType,
       }),
     }
   )
