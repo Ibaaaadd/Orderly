@@ -2,15 +2,28 @@ const menuModel = require('../models/menuModel')
 
 /**
  * GET /api/menus
- * Optional query: ?category_id=1
+ * Optional query: ?category_id=1&search=nasi&page=1&limit=10
  */
 async function getMenus(req, res, next) {
   try {
-    const { category_id } = req.query
-    const menus = await menuModel.findAll({
+    const { category_id, search, page = '1', limit = '10' } = req.query
+    const pageNum  = Math.max(1, parseInt(page, 10) || 1)
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 10))
+
+    const { rows, total } = await menuModel.findAll({
       category_id: category_id ? parseInt(category_id, 10) : undefined,
+      search:      search || undefined,
+      page:        pageNum,
+      limit:       limitNum,
     })
-    res.json({ success: true, data: menus })
+
+    res.json({
+      success: true,
+      data: rows,
+      total,
+      page: pageNum,
+      totalPages: Math.ceil(total / limitNum),
+    })
   } catch (err) {
     next(err)
   }

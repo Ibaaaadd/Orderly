@@ -99,11 +99,28 @@ async function getOrder(req, res, next) {
 
 /**
  * GET /api/orders
+ * Optional query: ?status=pending&search=budi&page=1&limit=10
  */
 async function getAllOrders(req, res, next) {
   try {
-    const orders = await orderModel.findAll()
-    res.json({ success: true, data: orders })
+    const { status, search, page = '1', limit = '10' } = req.query
+    const pageNum  = Math.max(1, parseInt(page, 10) || 1)
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 10))
+
+    const { rows, total } = await orderModel.findAll({
+      status: status || undefined,
+      search: search || undefined,
+      page:   pageNum,
+      limit:  limitNum,
+    })
+
+    res.json({
+      success: true,
+      data: rows,
+      total,
+      page: pageNum,
+      totalPages: Math.ceil(total / limitNum),
+    })
   } catch (err) {
     next(err)
   }

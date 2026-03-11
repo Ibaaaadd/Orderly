@@ -60,9 +60,28 @@ const orderModel = {
     return order
   },
 
-  /** Get all orders with their items (most recent first) */
-  findAll: async () => {
-    const res = await query(
+  /** Get orders with optional status/search filter and pagination — returns { rows, total } */
+  findAll: async ({ status, search, page = 1, limit = 10 } = {}) => {
+    const whereParams = []
+    let where = ''
+
+    if (status) {
+      whereParams.push(status)
+      where += ` AND o.status = $${whereParams.length}`
+    }
+    if (search) {
+      whereParams.push(`%${search}%`)
+      where += ` AND o.customer_name ILIKE $${whereParams.length}`
+    }
+
+    const countRes = await query(
+      `SELECT COUNT(*) FROM orders o WHERE 1=1${where}`,
+      whereParams
+    )
+    const total = parseInt(countRes.rows[0].count, 10)
+
+    const offset = (page - 1) * limit
+    const dataRes = await query(
       `SELECT o.*,
               COALESCE(
                 json_agg(
@@ -80,11 +99,13 @@ const orderModel = {
          FROM orders o
          LEFT JOIN order_items oi ON oi.order_id = o.id
          LEFT JOIN menus m ON m.id = oi.menu_id
+        WHERE 1=1${where}
         GROUP BY o.id
-        ORDER BY o.created_at DESC`,
-      []
+        ORDER BY o.created_at DESC
+        LIMIT $${whereParams.length + 1} OFFSET $${whereParams.length + 2}`,
+      [...whereParams, limit, offset]
     )
-    return res.rows
+    return { rows: dataRes.rows, total }
   },
 
   /** Update order status */

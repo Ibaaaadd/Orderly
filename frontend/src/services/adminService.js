@@ -13,7 +13,7 @@ export const updateMenu = (id, data) => api.put(`/menus/${id}`, data)
 export const deleteMenu = (id) => api.delete(`/menus/${id}`)
 
 // ─── Orders ───────────────────────────────────────────────────
-export const getOrders = () => api.get('/orders')
+export const getOrders = (params) => api.get('/orders', { params })
 
 // ─── Reports ──────────────────────────────────────────────────
 export const getReportSummary   = ()     => api.get('/reports/summary')

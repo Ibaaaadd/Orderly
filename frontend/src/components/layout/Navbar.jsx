@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { ShoppingCart, UtensilsCrossed, ClipboardList, LayoutDashboard } from 'lucide-react'
+import { ShoppingCart, ChefHat, ClipboardList, LayoutDashboard } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import useCartStore from '../../store/cartStore.js'
 
@@ -25,7 +25,7 @@ export default function Navbar() {
           className="flex items-center gap-2 font-extrabold text-xl text-zinc-900 tracking-tight"
         >
           <span className="bg-primary-500 text-white rounded-xl p-1.5">
-            <UtensilsCrossed size={18} />
+            <ChefHat size={18} />
           </span>
           Orderly
         </Link>

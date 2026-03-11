@@ -34,19 +34,29 @@ export default function AdminOrdersPage() {
   const [receipt, setReceipt]     = useState(null)
   const [loadingReceipt, setLoadingReceipt] = useState(null)
   const [filterStatus, setFilterStatus]     = useState('')
+  const [page, setPage]           = useState(1)
+  const [pageSize, setPageSize]   = useState(10)
+  const [search, setSearch]       = useState('')
+  const [total, setTotal]         = useState(0)
 
   const load = useCallback(async () => {
     try {
       setLoading(true)
       setError('')
-      const res = await adminService.getOrders()
+      const res = await adminService.getOrders({
+        page,
+        limit: pageSize,
+        ...(search       ? { search }              : {}),
+        ...(filterStatus ? { status: filterStatus } : {}),
+      })
       setOrders(res.data)
+      setTotal(res.total)
     } catch (e) {
       setError(e.message)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [page, pageSize, search, filterStatus])
 
   useEffect(() => {
     load()
@@ -69,8 +79,6 @@ export default function AdminOrdersPage() {
       setLoadingReceipt(null)
     }
   }
-
-  const filteredOrders = filterStatus ? orders.filter((o) => o.status === filterStatus) : orders
 
   const STATUS_FILTERS = [
     { value: '',          label: 'Semua',     Icon: LayoutGrid,   active: 'bg-primary-600 text-white',                     inactive: 'bg-surface-100 text-surface-600 hover:bg-surface-200' },
@@ -142,9 +150,14 @@ export default function AdminOrdersPage() {
 
       <DataTable
         columns={columns}
-        data={filteredOrders}
+        data={orders}
         loading={loading}
-        pageSize={10}
+        serverSide
+        serverTotal={total}
+        serverPage={page}
+        onServerPageChange={setPage}
+        onServerPageSizeChange={setPageSize}
+        onServerSearch={setSearch}
         searchKeys={['customer_name']}
         emptyText="Belum ada pesanan"
         toolbar={
@@ -152,7 +165,7 @@ export default function AdminOrdersPage() {
             {STATUS_FILTERS.map(({ value, label, Icon, active, inactive }) => (
               <button
                 key={value}
-                onClick={() => setFilterStatus(value)}
+                onClick={() => { setFilterStatus(value); setPage(1) }}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
                   filterStatus === value ? active : inactive
                 }`}

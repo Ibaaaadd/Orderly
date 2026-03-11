@@ -1,17 +1,15 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search, ChevronDown } from 'lucide-react'
 
 /**
  * DataTable – reusable paginated data table.
  *
- * Props:
- *   columns  – Array<{ key, label, render?, className?, headerClassName? }>
- *   data     – Array of row objects
- *   pageSize – default rows per page (default 10)
- *   searchKeys – Array<string> keys to search across
- *   emptyText – string shown when no data
- *   loading   – boolean
- *   actions   – (row) => ReactNode — optional per-row action cell
+ * Client-side mode (default):
+ *   columns, data, pageSize, searchKeys, emptyText, loading, actions, toolbar
+ *
+ * Server-side mode (serverSide=true):
+ *   serverSide, serverTotal, serverPage
+ *   onServerPageChange(page), onServerPageSizeChange(size), onServerSearch(query)
  */
 export default function DataTable({
   columns = [],
@@ -22,32 +20,61 @@ export default function DataTable({
   loading = false,
   actions,
   toolbar,
+  // Server-side pagination
+  serverSide = false,
+  serverTotal = 0,
+  serverPage = 1,
+  onServerPageChange,
+  onServerPageSizeChange,
+  onServerSearch,
 }) {
   const [search, setSearch]     = useState('')
   const [page, setPage]         = useState(1)
   const [pageSize, setPageSize] = useState(defaultPageSize)
+  const debounceRef             = useRef(null)
 
-  // Filter
+  // Debounce search → server callback
+  useEffect(() => {
+    if (!serverSide) return
+    clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      onServerSearch?.(search)
+      onServerPageChange?.(1)
+    }, 400)
+    return () => clearTimeout(debounceRef.current)
+  }, [search]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Client-side filter (skipped in server-side mode)
   const filtered = useMemo(() => {
-    if (!search.trim()) return data
+    if (serverSide || !search.trim()) return data
     const q = search.toLowerCase()
     return data.filter((row) =>
       searchKeys.some((key) => String(row[key] ?? '').toLowerCase().includes(q))
     )
-  }, [data, search, searchKeys])
+  }, [data, search, searchKeys, serverSide])
 
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
-  const safePage   = Math.min(page, totalPages)
-  const from       = (safePage - 1) * pageSize
-  const slice      = filtered.slice(from, from + pageSize)
+  // Unified computed values — server-side overrides client-side values
+  const activeTotal      = serverSide ? serverTotal : filtered.length
+  const activeTotalPages = Math.max(1, Math.ceil(activeTotal / pageSize))
+  const activePage       = serverSide ? serverPage  : Math.min(page, activeTotalPages)
+  const activeFrom       = (activePage - 1) * pageSize
+  const activeSlice      = serverSide ? data        : filtered.slice(activeFrom, activeFrom + pageSize)
 
-  function goTo(p) { setPage(Math.max(1, Math.min(p, totalPages))) }
+  function goTo(p) {
+    const clamped = Math.max(1, Math.min(p, activeTotalPages))
+    if (serverSide) onServerPageChange?.(clamped)
+    else setPage(clamped)
+  }
 
-  // Reset page when search changes
   function handleSearch(e) {
     setSearch(e.target.value)
-    setPage(1)
+    if (!serverSide) setPage(1)
+  }
+
+  function handlePageSize(n) {
+    setPageSize(n)
+    if (serverSide) { onServerPageSizeChange?.(n); onServerPageChange?.(1) }
+    else setPage(1)
   }
 
   return (
@@ -74,7 +101,7 @@ export default function DataTable({
           <div className="relative">
             <select
               value={pageSize}
-              onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1) }}
+              onChange={(e) => handlePageSize(Number(e.target.value))}
               className="appearance-none border border-surface-200 rounded-xl pl-3 pr-7 py-1.5 text-sm bg-surface-50 focus:outline-none focus:ring-2 focus:ring-primary-400 cursor-pointer"
             >
               {[10, 25, 50, 100].map((n) => (
@@ -121,14 +148,14 @@ export default function DataTable({
                   </td>
                 </tr>
               )}
-              {!loading && filtered.length === 0 && (
+              {!loading && activeSlice.length === 0 && (
                 <tr>
                   <td colSpan={columns.length + (actions ? 1 : 0)} className="text-center py-12 text-surface-400">
                     {emptyText}
                   </td>
                 </tr>
               )}
-              {!loading && slice.map((row, idx) => (
+              {!loading && activeSlice.map((row, idx) => (
                 <tr key={row.id ?? idx} className="hover:bg-surface-50 transition-colors">
                   {columns.map((col) => (
                     <td key={col.key} className={`px-4 py-3 text-surface-700 ${col.className ?? ''}`}>
@@ -148,38 +175,35 @@ export default function DataTable({
       </div>
 
       {/* Pagination */}
-      {filtered.length > 0 && (
+      {(activeTotal > 0 || loading) && (
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-zinc-500 px-4 py-3 border-t border-surface-100 bg-surface-50">
           <span>
-            Menampilkan {Math.min(from + 1, filtered.length)}–{Math.min(from + pageSize, filtered.length)} dari {filtered.length} data
+            {!loading && activeTotal > 0
+              ? `Menampilkan ${Math.min(activeFrom + 1, activeTotal)}–${Math.min(activeFrom + pageSize, activeTotal)} dari ${activeTotal} data`
+              : '—'}
           </span>
           <div className="flex items-center gap-1">
-            <PagBtn onClick={() => goTo(1)}          disabled={safePage === 1}          title="Pertama">
+            <PagBtn onClick={() => goTo(1)}              disabled={activePage === 1}             title="Pertama">
               <ChevronsLeft size={14} />
             </PagBtn>
-            <PagBtn onClick={() => goTo(safePage - 1)} disabled={safePage === 1}        title="Sebelumnya">
+            <PagBtn onClick={() => goTo(activePage - 1)} disabled={activePage === 1}             title="Sebelumnya">
               <ChevronLeft size={14} />
             </PagBtn>
 
-            {/* Page numbers */}
-            {pageNumbers(safePage, totalPages).map((p, i) =>
+            {pageNumbers(activePage, activeTotalPages).map((p, i) =>
               p === '…' ? (
                 <span key={`e${i}`} className="px-2">…</span>
               ) : (
-                <PagBtn
-                  key={p}
-                  onClick={() => goTo(p)}
-                  active={p === safePage}
-                >
+                <PagBtn key={p} onClick={() => goTo(p)} active={p === activePage}>
                   {p}
                 </PagBtn>
               )
             )}
 
-            <PagBtn onClick={() => goTo(safePage + 1)} disabled={safePage === totalPages} title="Berikutnya">
+            <PagBtn onClick={() => goTo(activePage + 1)} disabled={activePage === activeTotalPages} title="Berikutnya">
               <ChevronRight size={14} />
             </PagBtn>
-            <PagBtn onClick={() => goTo(totalPages)}   disabled={safePage === totalPages} title="Terakhir">
+            <PagBtn onClick={() => goTo(activeTotalPages)} disabled={activePage === activeTotalPages} title="Terakhir">
               <ChevronsRight size={14} />
             </PagBtn>
           </div>

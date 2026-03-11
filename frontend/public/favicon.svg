@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="8" fill="#f97316"/>
+  <!-- Chef hat -->
+  <path d="M10 20h12v2.5a1 1 0 01-1 1H11a1 1 0 01-1-1V20z" fill="white"/>
+  <path d="M16 7a4 4 0 00-4 4 3 3 0 000 6h8a3 3 0 000-6 4 4 0 00-4-4z" fill="white"/>
+  <rect x="11.5" y="19" width="9" height="1" rx="0.5" fill="#f97316"/>
+</svg>

@@ -4,24 +4,38 @@ const { query } = require('../config/db')
  * Menu model – raw SQL queries for the menus table.
  */
 const menuModel = {
-  /** Get all menus, optionally filtered by category */
-  findAll: async ({ category_id } = {}) => {
-    const params = []
-    let sql = `
-      SELECT
-        m.id, m.name, m.price, m.image_url, m.is_available, m.levels,
-        c.id AS category_id, c.name AS category_name
-      FROM menus m
-      LEFT JOIN categories c ON c.id = m.category_id
-      WHERE 1=1
-    `
+  /** Get menus with optional filter, search and pagination — returns { rows, total } */
+  findAll: async ({ category_id, search, page = 1, limit = 10 } = {}) => {
+    const whereParams = []
+    let where = ''
+
     if (category_id) {
-      params.push(category_id)
-      sql += ` AND m.category_id = $${params.length}`
+      whereParams.push(category_id)
+      where += ` AND m.category_id = $${whereParams.length}`
     }
-    sql += ' ORDER BY m.id ASC'
-    const res = await query(sql, params)
-    return res.rows
+    if (search) {
+      whereParams.push(`%${search}%`)
+      where += ` AND (m.name ILIKE $${whereParams.length} OR c.name ILIKE $${whereParams.length})`
+    }
+
+    const countRes = await query(
+      `SELECT COUNT(*) FROM menus m LEFT JOIN categories c ON c.id = m.category_id WHERE 1=1${where}`,
+      whereParams
+    )
+    const total = parseInt(countRes.rows[0].count, 10)
+
+    const offset = (page - 1) * limit
+    const dataRes = await query(
+      `SELECT m.id, m.name, m.price, m.image_url, m.is_available, m.levels,
+              c.id AS category_id, c.name AS category_name
+         FROM menus m
+         LEFT JOIN categories c ON c.id = m.category_id
+        WHERE 1=1${where}
+        ORDER BY m.id ASC
+        LIMIT $${whereParams.length + 1} OFFSET $${whereParams.length + 2}`,
+      [...whereParams, limit, offset]
+    )
+    return { rows: dataRes.rows, total }
   },
 
   /** Find a single menu by id */

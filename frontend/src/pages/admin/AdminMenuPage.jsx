@@ -37,31 +37,46 @@ export default function AdminMenuPage() {
   const [loading, setLoading]       = useState(true)
   const [error, setError]           = useState('')
   const [showModal, setShowModal]   = useState(false)
-  const [editing, setEditing]       = useState(null)   // null = create mode
+  const [editing, setEditing]       = useState(null)
   const [form, setForm]             = useState(EMPTY_FORM)
   const [saving, setSaving]         = useState(false)
   const [formError, setFormError]   = useState('')
   const [deletingId, setDeletingId] = useState(null)
   const [newLevelInput, setNewLevelInput] = useState('')
-  const [filterCat, setFilterCat]         = useState('')
+  const [filterCat, setFilterCat]   = useState('')
+  const [page, setPage]             = useState(1)
+  const [pageSize, setPageSize]     = useState(10)
+  const [search, setSearch]         = useState('')
+  const [total, setTotal]           = useState(0)
+
+  // Load categories once
+  const loadCategories = useCallback(async () => {
+    try {
+      const res = await adminService.getCategories()
+      setCategories(res.data)
+    } catch {}
+  }, [])
 
   const load = useCallback(async () => {
     try {
       setLoading(true)
       setError('')
-      const [menusRes, catsRes] = await Promise.all([
-        adminService.getMenus(),
-        adminService.getCategories(),
-      ])
-      setMenus(menusRes.data)
-      setCategories(catsRes.data)
+      const res = await adminService.getMenus({
+        page,
+        limit: pageSize,
+        ...(search     ? { search }               : {}),
+        ...(filterCat  ? { category_id: filterCat } : {}),
+      })
+      setMenus(res.data)
+      setTotal(res.total)
     } catch (e) {
       setError(e.message)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [page, pageSize, search, filterCat])
 
+  useEffect(() => { loadCategories() }, [loadCategories])
   useEffect(() => { load() }, [load])
 
   function openCreate() {
@@ -126,24 +141,14 @@ export default function AdminMenuPage() {
     setDeletingId(id)
     try {
       await adminService.deleteMenu(id)
-      setMenus((prev) => prev.filter((m) => m.id !== id))
       toast('Menu berhasil dihapus')
+      load()
     } catch (e) {
       showError('Gagal', e.message)
     } finally {
       setDeletingId(null)
     }
   }
-
-  const menusWithCategory = useMemo(
-    () => menus.map((m) => ({ ...m, category_name: categories.find((c) => c.id === m.category_id)?.name ?? '' })),
-    [menus, categories]
-  )
-
-  const filteredMenus = useMemo(
-    () => filterCat ? menusWithCategory.filter((m) => String(m.category_id) === filterCat) : menusWithCategory,
-    [menusWithCategory, filterCat]
-  )
 
   const columns = [
     {
@@ -199,15 +204,20 @@ export default function AdminMenuPage() {
 
       <DataTable
         columns={columns}
-        data={filteredMenus}
+        data={menus}
         loading={loading}
-        pageSize={10}
-        searchKeys={['name', 'category_name']}
+        serverSide
+        serverTotal={total}
+        serverPage={page}
+        onServerPageChange={setPage}
+        onServerPageSizeChange={setPageSize}
+        onServerSearch={setSearch}
+        searchKeys={['name']}
         emptyText="Belum ada menu"
         toolbar={
           <div className="flex flex-wrap gap-1.5">
             <button
-              onClick={() => setFilterCat('')}
+              onClick={() => { setFilterCat(''); setPage(1) }}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
                 filterCat === '' ? 'bg-primary-600 text-white' : 'bg-surface-100 text-surface-600 hover:bg-surface-200'
               }`}
@@ -219,7 +229,7 @@ export default function AdminMenuPage() {
               return (
                 <button
                   key={c.id}
-                  onClick={() => setFilterCat(String(c.id))}
+                  onClick={() => { setFilterCat(String(c.id)); setPage(1) }}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
                     filterCat === String(c.id) ? 'bg-primary-600 text-white' : 'bg-surface-100 text-surface-600 hover:bg-surface-200'
                   }`}
