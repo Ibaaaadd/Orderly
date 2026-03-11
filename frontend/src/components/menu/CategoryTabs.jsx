@@ -1,5 +1,23 @@
 import React from 'react'
 import { motion } from 'framer-motion'
+import { LayoutGrid, Utensils, GlassWater, Cookie, Coffee, Pizza, Sandwich, Salad, IceCream, Soup, Tag } from 'lucide-react'
+
+const CAT_ICONS = [
+  { pattern: /makanan|food|meal|makan/i,    Icon: Utensils },
+  { pattern: /minuman|drink|minum|beverage/i, Icon: GlassWater },
+  { pattern: /snack|camilan|cemilan/i,       Icon: Cookie },
+  { pattern: /kopi|coffee/i,                 Icon: Coffee },
+  { pattern: /pizza/i,                       Icon: Pizza },
+  { pattern: /sandwich|burger/i,             Icon: Sandwich },
+  { pattern: /salad|sayur/i,                 Icon: Salad },
+  { pattern: /es|ice|cream/i,                Icon: IceCream },
+  { pattern: /sup|soto|soup/i,               Icon: Soup },
+]
+
+function getCategoryIcon(name) {
+  const match = CAT_ICONS.find(({ pattern }) => pattern.test(name))
+  return match ? match.Icon : Tag
+}
 
 /**
  * CategoryTabs – horizontal scrollable tab bar for menu categories.
@@ -15,6 +33,7 @@ export default function CategoryTabs({ categories = [], activeCategory, onChange
       {/* "All" tab */}
       <Tab
         label="Semua"
+        Icon={LayoutGrid}
         isActive={activeCategory === null}
         onClick={() => onChange(null)}
       />
@@ -22,6 +41,7 @@ export default function CategoryTabs({ categories = [], activeCategory, onChange
         <Tab
           key={cat.id}
           label={cat.name}
+          Icon={getCategoryIcon(cat.name)}
           isActive={activeCategory === cat.id}
           onClick={() => onChange(cat.id)}
         />
@@ -30,12 +50,12 @@ export default function CategoryTabs({ categories = [], activeCategory, onChange
   )
 }
 
-function Tab({ label, isActive, onClick }) {
+function Tab({ label, Icon, isActive, onClick }) {
   return (
     <button
       onClick={onClick}
       className={[
-        'relative shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-colors duration-150',
+        'relative shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-colors duration-150',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
         isActive
           ? 'text-white'
@@ -50,6 +70,7 @@ function Tab({ label, isActive, onClick }) {
           transition={{ type: 'spring', stiffness: 500, damping: 35 }}
         />
       )}
+      <Icon size={14} className="relative z-10 shrink-0" />
       <span className="relative z-10">{label}</span>
     </button>
   )

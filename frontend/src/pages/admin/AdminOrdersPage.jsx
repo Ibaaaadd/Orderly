@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { RefreshCw, Printer } from 'lucide-react'
+import { RefreshCw, Printer, Clock, CheckCircle2, XCircle, LayoutGrid } from 'lucide-react'
 import * as adminService from '../../services/adminService'
 import { formatPrice } from '../../utils/formatPrice'
 import DataTable from '../../components/ui/DataTable'
@@ -33,6 +33,7 @@ export default function AdminOrdersPage() {
   const [error, setError]         = useState('')
   const [receipt, setReceipt]     = useState(null)
   const [loadingReceipt, setLoadingReceipt] = useState(null)
+  const [filterStatus, setFilterStatus]     = useState('')
 
   const load = useCallback(async () => {
     try {
@@ -68,6 +69,15 @@ export default function AdminOrdersPage() {
       setLoadingReceipt(null)
     }
   }
+
+  const filteredOrders = filterStatus ? orders.filter((o) => o.status === filterStatus) : orders
+
+  const STATUS_FILTERS = [
+    { value: '',          label: 'Semua',     Icon: LayoutGrid,   active: 'bg-primary-600 text-white',                     inactive: 'bg-surface-100 text-surface-600 hover:bg-surface-200' },
+    { value: 'pending',   label: 'Menunggu',  Icon: Clock,        active: 'bg-yellow-500 text-white',                      inactive: 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100' },
+    { value: 'paid',      label: 'Lunas',     Icon: CheckCircle2, active: 'bg-green-500 text-white',                       inactive: 'bg-green-50 text-green-700 hover:bg-green-100' },
+    { value: 'cancelled', label: 'Dibatalkan',Icon: XCircle,      active: 'bg-red-500 text-white',                         inactive: 'bg-red-50 text-red-600 hover:bg-red-100' },
+  ]
 
   const columns = [
     {
@@ -111,7 +121,7 @@ export default function AdminOrdersPage() {
   ]
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-surface-800">Pesanan</h1>
         <button
@@ -132,11 +142,26 @@ export default function AdminOrdersPage() {
 
       <DataTable
         columns={columns}
-        data={orders}
+        data={filteredOrders}
         loading={loading}
         pageSize={10}
         searchKeys={['customer_name']}
         emptyText="Belum ada pesanan"
+        toolbar={
+          <div className="flex flex-wrap gap-1.5">
+            {STATUS_FILTERS.map(({ value, label, Icon, active, inactive }) => (
+              <button
+                key={value}
+                onClick={() => setFilterStatus(value)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+                  filterStatus === value ? active : inactive
+                }`}
+              >
+                <Icon size={12} />{label}
+              </button>
+            ))}
+          </div>
+        }
         actions={(row) => (
           <button
             onClick={() => openReceipt(row)}

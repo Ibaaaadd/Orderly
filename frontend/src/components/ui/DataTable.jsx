@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search, ChevronDown } from 'lucide-react'
 
 /**
  * DataTable – reusable paginated data table.
@@ -21,6 +21,7 @@ export default function DataTable({
   emptyText = 'Tidak ada data',
   loading = false,
   actions,
+  toolbar,
 }) {
   const [search, setSearch]     = useState('')
   const [page, setPage]         = useState(1)
@@ -50,37 +51,43 @@ export default function DataTable({
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="bg-white rounded-2xl border border-surface-200 shadow-sm overflow-hidden flex flex-col">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {searchKeys.length > 0 && (
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
-            <input
-              type="text"
-              value={search}
-              onChange={handleSearch}
-              placeholder="Cari…"
-              className="pl-8 pr-3 py-2 text-sm border border-surface-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white w-52"
-            />
-          </div>
-        )}
-        <div className="ml-auto flex items-center gap-2 text-sm text-zinc-500">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-surface-100">
+        <div className="flex flex-wrap items-center gap-2">
+          {searchKeys.length > 0 && (
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+              <input
+                type="text"
+                value={search}
+                onChange={handleSearch}
+                placeholder="Cari…"
+                className="pl-8 pr-3 py-2 text-sm border border-surface-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400 bg-surface-50 w-52"
+              />
+            </div>
+          )}
+          {toolbar}
+        </div>
+        <div className="flex items-center gap-2 text-sm text-zinc-500">
           <span>Baris:</span>
-          <select
-            value={pageSize}
-            onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1) }}
-            className="border border-surface-200 rounded-xl px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-400"
-          >
-            {[10, 25, 50, 100].map((n) => (
-              <option key={n} value={n}>{n}</option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              value={pageSize}
+              onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1) }}
+              className="appearance-none border border-surface-200 rounded-xl pl-3 pr-7 py-1.5 text-sm bg-surface-50 focus:outline-none focus:ring-2 focus:ring-primary-400 cursor-pointer"
+            >
+              {[10, 25, 50, 100].map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
+            <ChevronDown size={13} className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+          </div>
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-surface-200 shadow-sm overflow-hidden">
+      <div className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[500px]">
             <thead className="bg-surface-50 border-b border-surface-200">
@@ -142,7 +149,7 @@ export default function DataTable({
 
       {/* Pagination */}
       {filtered.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-zinc-500">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-zinc-500 px-4 py-3 border-t border-surface-100 bg-surface-50">
           <span>
             Menampilkan {Math.min(from + 1, filtered.length)}–{Math.min(from + pageSize, filtered.length)} dari {filtered.length} data
           </span>
