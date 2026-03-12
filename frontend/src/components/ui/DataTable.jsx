@@ -97,7 +97,7 @@ export default function DataTable({
           {toolbar}
         </div>
         <div className="flex items-center gap-2 text-sm text-zinc-500">
-          <span>Baris:</span>
+          <span>Show</span>
           <div className="relative">
             <select
               value={pageSize}
@@ -115,7 +115,7 @@ export default function DataTable({
 
       {/* Table */}
       <div className="overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className="w-full text-sm min-w-[500px]">
             <thead className="bg-surface-50 border-b border-surface-200">
               <tr>
@@ -134,28 +134,15 @@ export default function DataTable({
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-surface-100">
-              {loading && (
+            <tbody className={`divide-y divide-surface-100 transition-opacity duration-200 ${loading ? 'opacity-40 pointer-events-none' : ''}`}>
+              {activeSlice.length === 0 && (
                 <tr>
                   <td colSpan={columns.length + (actions ? 1 : 0)} className="text-center py-12 text-surface-400">
-                    <div className="flex items-center justify-center gap-2">
-                      <svg className="animate-spin h-4 w-4 text-primary-500" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                      </svg>
-                      Memuat…
-                    </div>
+                    {loading ? '\u00a0' : emptyText}
                   </td>
                 </tr>
               )}
-              {!loading && activeSlice.length === 0 && (
-                <tr>
-                  <td colSpan={columns.length + (actions ? 1 : 0)} className="text-center py-12 text-surface-400">
-                    {emptyText}
-                  </td>
-                </tr>
-              )}
-              {!loading && activeSlice.map((row, idx) => (
+              {activeSlice.map((row, idx) => (
                 <tr key={row.id ?? idx} className="hover:bg-surface-50 transition-colors">
                   {columns.map((col) => (
                     <td key={col.key} className={`px-4 py-3 text-surface-700 ${col.className ?? ''}`}>
@@ -171,6 +158,19 @@ export default function DataTable({
               ))}
             </tbody>
           </table>
+
+          {/* Loading overlay — floats above tbody, header stays intact */}
+          {loading && (
+            <div className="absolute inset-0 top-0 flex items-center justify-center pointer-events-none">
+              <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-xl shadow-sm text-surface-500 text-sm">
+                <svg className="animate-spin h-4 w-4 text-primary-500 shrink-0" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                </svg>
+                Memuat…
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -178,9 +178,24 @@ export default function DataTable({
       {(activeTotal > 0 || loading) && (
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-zinc-500 px-4 py-3 border-t border-surface-100 bg-surface-50">
           <span>
-            {!loading && activeTotal > 0
-              ? `Menampilkan ${Math.min(activeFrom + 1, activeTotal)}–${Math.min(activeFrom + pageSize, activeTotal)} dari ${activeTotal} data`
-              : '—'}
+            {!loading && activeTotal > 0 ? (
+              <>
+                <span className="font-semibold">
+                  {Math.min(activeFrom + 1, activeTotal)}
+                </span>{" "}
+                to{" "}
+                <span className="font-semibold">
+                  {Math.min(activeFrom + pageSize, activeTotal)}
+                </span>{" "}
+                of{" "}
+                <span className="font-semibold">
+                  {activeTotal}
+                </span>{" "}
+                results
+              </>
+            ) : (
+              "—"
+            )}
           </span>
           <div className="flex items-center gap-1">
             <PagBtn onClick={() => goTo(1)}              disabled={activePage === 1}             title="Pertama">

@@ -103,15 +103,17 @@ async function getOrder(req, res, next) {
  */
 async function getAllOrders(req, res, next) {
   try {
-    const { status, search, page = '1', limit = '10' } = req.query
+    const { status, search, date_from, date_to, page = '1', limit = '10' } = req.query
     const pageNum  = Math.max(1, parseInt(page, 10) || 1)
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 10))
+    const limitNum = Math.min(10000, Math.max(1, parseInt(limit, 10) || 10))
 
     const { rows, total } = await orderModel.findAll({
-      status: status || undefined,
-      search: search || undefined,
-      page:   pageNum,
-      limit:  limitNum,
+      status:    status    || undefined,
+      search:    search    || undefined,
+      date_from: date_from || undefined,
+      date_to:   date_to   || undefined,
+      page:      pageNum,
+      limit:     limitNum,
     })
 
     res.json({

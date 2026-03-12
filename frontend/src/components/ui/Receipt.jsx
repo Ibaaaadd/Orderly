@@ -25,7 +25,7 @@ export default function Receipt({ order, onClose }) {
   function handlePrint() {
     const itemRows = items.map((item) => `
       <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:5px;">
-        <span style="flex:1;">${esc(item.name ?? item.menu_name ?? 'Item')} ×${item.qty ?? item.quantity ?? 1}${item.level ? ` <span style="font-size:11px;color:#888;">(${esc(item.level)})</span>` : ''}</span>
+        <span style="flex:1;">${esc(item.name ?? item.menu_name ?? 'Item')} ×${item.qty ?? item.quantity ?? 1}${item.level ? ` <span style="font-size:11px;color:#888;">(Level ${esc(item.level)})</span>` : ''}</span>
         <span style="white-space:nowrap;">${formatPrice(Number(item.subtotal))}</span>
       </div>`).join('')
 
@@ -138,7 +138,7 @@ export default function Receipt({ order, onClose }) {
                   <span className="flex-1 text-surface-700">
                     {item.name ?? item.menu_name ?? 'Item'}
                     <span className="text-surface-400"> ×{item.qty ?? item.quantity}</span>
-                    {item.level && <span className="ml-1 text-[11px] text-surface-400">({item.level})</span>}
+                    {item.level && <span className="ml-1 text-[11px] text-surface-400">(Level {item.level})</span>}
                   </span>
                   <span className="shrink-0 font-medium text-surface-800">{formatPrice(Number(item.subtotal))}</span>
                 </div>

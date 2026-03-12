@@ -60,8 +60,8 @@ const orderModel = {
     return order
   },
 
-  /** Get orders with optional status/search filter and pagination — returns { rows, total } */
-  findAll: async ({ status, search, page = 1, limit = 10 } = {}) => {
+  /** Get orders with optional status/search/date filter and pagination — returns { rows, total } */
+  findAll: async ({ status, search, date_from, date_to, page = 1, limit = 10 } = {}) => {
     const whereParams = []
     let where = ''
 
@@ -72,6 +72,14 @@ const orderModel = {
     if (search) {
       whereParams.push(`%${search}%`)
       where += ` AND o.customer_name ILIKE $${whereParams.length}`
+    }
+    if (date_from) {
+      whereParams.push(date_from)
+      where += ` AND DATE(o.created_at AT TIME ZONE 'Asia/Jakarta') >= $${whereParams.length}`
+    }
+    if (date_to) {
+      whereParams.push(date_to)
+      where += ` AND DATE(o.created_at AT TIME ZONE 'Asia/Jakarta') <= $${whereParams.length}`
     }
 
     const countRes = await query(
@@ -91,7 +99,8 @@ const orderModel = {
                     'name',     m.name,
                     'price',    oi.price,
                     'quantity', oi.qty,
-                    'subtotal', oi.subtotal
+                    'subtotal', oi.subtotal,
+                    'level',    oi.level
                   ) ORDER BY oi.id
                 ) FILTER (WHERE oi.id IS NOT NULL),
                 '[]'
