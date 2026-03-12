@@ -4,10 +4,10 @@
 -- ============================================================
 
 -- Categories
-INSERT INTO categories (name) VALUES
-  ('Makanan'),
-  ('Minuman'),
-  ('Snack');
+INSERT INTO categories (name, icon_key, color_key) VALUES
+  ('Makanan', 'utensils',    'primary'),
+  ('Minuman', 'glass-water', 'sky'),
+  ('Snack',   'cookie',      'amber');
 
 -- Menus — Makanan (category_id = 1)
 INSERT INTO menus (category_id, name, price, image_url, is_available) VALUES

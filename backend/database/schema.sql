@@ -14,6 +14,8 @@ DROP TABLE IF EXISTS categories    CASCADE;
 CREATE TABLE categories (
   id         SERIAL PRIMARY KEY,
   name       VARCHAR(100) NOT NULL,
+  icon_key   VARCHAR(50)  NOT NULL DEFAULT 'tag',
+  color_key  VARCHAR(50)  NOT NULL DEFAULT 'primary',
   created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 

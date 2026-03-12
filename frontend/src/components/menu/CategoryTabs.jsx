@@ -1,21 +1,49 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { LayoutGrid, Utensils, GlassWater, Cookie, Coffee, Pizza, Sandwich, Salad, IceCream, Soup, Tag } from 'lucide-react'
+import {
+  LayoutGrid, Utensils, GlassWater, Cookie, Coffee, Pizza,
+  Sandwich, Salad, IceCream, Soup, Beef, Fish, Egg, ChefHat,
+  Apple, Leaf, Flame, Star, Heart, ShoppingBag, Tag,
+} from 'lucide-react'
 
+const ICON_MAP = {
+  'utensils':    Utensils,
+  'glass-water': GlassWater,
+  'cookie':      Cookie,
+  'coffee':      Coffee,
+  'pizza':       Pizza,
+  'sandwich':    Sandwich,
+  'salad':       Salad,
+  'ice-cream':   IceCream,
+  'soup':        Soup,
+  'beef':        Beef,
+  'fish':        Fish,
+  'egg':         Egg,
+  'chef-hat':    ChefHat,
+  'apple':       Apple,
+  'leaf':        Leaf,
+  'flame':       Flame,
+  'star':        Star,
+  'heart':       Heart,
+  'bag':         ShoppingBag,
+  'tag':         Tag,
+}
+
+// Fallback: auto-detect from name if no icon_key stored
 const CAT_ICONS = [
-  { pattern: /makanan|food|meal|makan/i,    Icon: Utensils },
+  { pattern: /makanan|food|meal|makan/i,      Icon: Utensils   },
   { pattern: /minuman|drink|minum|beverage/i, Icon: GlassWater },
-  { pattern: /snack|camilan|cemilan/i,       Icon: Cookie },
-  { pattern: /kopi|coffee/i,                 Icon: Coffee },
-  { pattern: /pizza/i,                       Icon: Pizza },
-  { pattern: /sandwich|burger/i,             Icon: Sandwich },
-  { pattern: /salad|sayur/i,                 Icon: Salad },
-  { pattern: /es|ice|cream/i,                Icon: IceCream },
-  { pattern: /sup|soto|soup/i,               Icon: Soup },
+  { pattern: /snack|camilan|cemilan/i,        Icon: Cookie     },
+  { pattern: /kopi|coffee/i,                  Icon: Coffee     },
+  { pattern: /pizza/i,                        Icon: Pizza      },
+  { pattern: /sandwich|burger/i,              Icon: Sandwich   },
+  { pattern: /salad|sayur/i,                  Icon: Salad      },
+  { pattern: /es|ice|cream/i,                 Icon: IceCream   },
+  { pattern: /sup|soto|soup/i,                Icon: Soup       },
 ]
-
-function getCategoryIcon(name) {
-  const match = CAT_ICONS.find(({ pattern }) => pattern.test(name))
+function resolveCategoryIcon(cat) {
+  if (cat.icon_key && ICON_MAP[cat.icon_key]) return ICON_MAP[cat.icon_key]
+  const match = CAT_ICONS.find(({ pattern }) => pattern.test(cat.name))
   return match ? match.Icon : Tag
 }
 
@@ -41,7 +69,7 @@ export default function CategoryTabs({ categories = [], activeCategory, onChange
         <Tab
           key={cat.id}
           label={cat.name}
-          Icon={getCategoryIcon(cat.name)}
+          Icon={resolveCategoryIcon(cat)}
           isActive={activeCategory === cat.id}
           onClick={() => onChange(cat.id)}
         />

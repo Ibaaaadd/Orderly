@@ -7,7 +7,7 @@ const { query } = require('../config/db')
 async function getCategories(req, res, next) {
   try {
     const result = await query(
-      'SELECT id, name FROM categories ORDER BY id ASC'
+      'SELECT id, name, icon_key, color_key FROM categories ORDER BY id ASC'
     )
     res.json({ success: true, data: result.rows })
   } catch (err) {
@@ -20,13 +20,13 @@ async function getCategories(req, res, next) {
  */
 async function createCategory(req, res, next) {
   try {
-    const { name } = req.body
+    const { name, icon_key, color_key } = req.body
     if (!name || !name.trim()) {
       return res.status(400).json({ success: false, message: 'Nama kategori wajib diisi' })
     }
     const result = await query(
-      'INSERT INTO categories (name) VALUES ($1) RETURNING *',
-      [name.trim()]
+      'INSERT INTO categories (name, icon_key, color_key) VALUES ($1, $2, $3) RETURNING *',
+      [name.trim(), icon_key || 'tag', color_key || 'primary']
     )
     res.status(201).json({ success: true, data: result.rows[0] })
   } catch (err) {
@@ -40,13 +40,13 @@ async function createCategory(req, res, next) {
 async function updateCategory(req, res, next) {
   try {
     const { id } = req.params
-    const { name } = req.body
+    const { name, icon_key, color_key } = req.body
     if (!name || !name.trim()) {
       return res.status(400).json({ success: false, message: 'Nama kategori wajib diisi' })
     }
     const result = await query(
-      'UPDATE categories SET name = $1 WHERE id = $2 RETURNING *',
-      [name.trim(), parseInt(id, 10)]
+      'UPDATE categories SET name = $1, icon_key = $2, color_key = $3 WHERE id = $4 RETURNING *',
+      [name.trim(), icon_key || 'tag', color_key || 'primary', parseInt(id, 10)]
     )
     if (!result.rows[0]) {
       return res.status(404).json({ success: false, message: 'Kategori tidak ditemukan' })
