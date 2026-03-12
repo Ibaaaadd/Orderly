@@ -59,7 +59,7 @@ async function createOrder(req, res, next) {
         }
       }
 
-      enriched.push({ menu_id: menu.id, price: menu.price, qty, level: item.level || null })
+      enriched.push({ menu_id: menu.id, menu_name: menu.name, price: menu.price, qty, level: item.level || null })
     }
 
     // ── Calculate total ────────────────────────────────────────────

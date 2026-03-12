@@ -19,7 +19,7 @@ const menuModel = {
     }
 
     const countRes = await query(
-      `SELECT COUNT(*) FROM menus m LEFT JOIN categories c ON c.id = m.category_id WHERE 1=1${where}`,
+      `SELECT COUNT(*) FROM menus m LEFT JOIN categories c ON c.id = m.category_id WHERE m.deleted_at IS NULL${where}`,
       whereParams
     )
     const total = parseInt(countRes.rows[0].count, 10)
@@ -30,7 +30,7 @@ const menuModel = {
               c.id AS category_id, c.name AS category_name
          FROM menus m
          LEFT JOIN categories c ON c.id = m.category_id
-        WHERE 1=1${where}
+        WHERE m.deleted_at IS NULL${where}
         ORDER BY m.id ASC
         LIMIT $${whereParams.length + 1} OFFSET $${whereParams.length + 2}`,
       [...whereParams, limit, offset]
@@ -38,8 +38,17 @@ const menuModel = {
     return { rows: dataRes.rows, total }
   },
 
-  /** Find a single menu by id */
+  /** Find a single active (not deleted) menu by id */
   findById: async (id) => {
+    const res = await query(
+      'SELECT * FROM menus WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    )
+    return res.rows[0] || null
+  },
+
+  /** Find a menu by id regardless of deleted state (for internal/history use) */
+  findByIdAny: async (id) => {
     const res = await query(
       'SELECT * FROM menus WHERE id = $1',
       [id]
@@ -81,10 +90,10 @@ const menuModel = {
     return res.rows[0] || null
   },
 
-  /** Delete a menu item */
+  /** Soft-delete a menu item (sets deleted_at, preserves historical order data) */
   delete: async (id) => {
     const res = await query(
-      'DELETE FROM menus WHERE id = $1 RETURNING id',
+      'UPDATE menus SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id',
       [id]
     )
     return res.rows[0] || null

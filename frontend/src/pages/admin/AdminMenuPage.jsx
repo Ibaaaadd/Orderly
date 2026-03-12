@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Plus, Pencil, Trash2, X, Check, ImageIcon, Tag, DollarSign, Flame, LayoutGrid, ChevronDown, Utensils, GlassWater, Cookie, Coffee, Pizza, Sandwich, Salad, IceCream, Soup } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Check, ImageIcon, Tag, DollarSign, Flame, ChevronDown, Utensils, GlassWater, Cookie, Coffee, Pizza, Sandwich, Salad, IceCream, Soup, LayoutGrid, Link, Upload } from 'lucide-react'
 
 const CAT_ICONS = [
   { pattern: /makanan|food|meal|makan/i,      Icon: Utensils },
@@ -21,6 +21,7 @@ import * as adminService from '../../services/adminService'
 import { formatPrice } from '../../utils/formatPrice'
 import { confirmDelete, toast, showError } from '../../utils/swal'
 import DataTable from '../../components/ui/DataTable'
+import SelectDropdown from '../../components/ui/SelectDropdown'
 
 const EMPTY_FORM = {
   name: '',
@@ -44,6 +45,8 @@ export default function AdminMenuPage() {
   const [deletingId, setDeletingId] = useState(null)
   const [newLevelInput, setNewLevelInput] = useState('')
   const [filterCat, setFilterCat]   = useState('')
+  const [imgMode, setImgMode]       = useState('url')  // 'url' | 'upload'
+  const [previewImg, setPreviewImg] = useState(null)   // { url, name }
   const [page, setPage]             = useState(1)
   const [pageSize, setPageSize]     = useState(10)
   const [search, setSearch]         = useState('')
@@ -84,6 +87,7 @@ export default function AdminMenuPage() {
     setForm(EMPTY_FORM)
     setNewLevelInput('')
     setFormError('')
+    setImgMode('url')
     setShowModal(true)
   }
 
@@ -98,6 +102,7 @@ export default function AdminMenuPage() {
       levels:       Array.isArray(menu.levels) ? [...menu.levels] : [],
     })
     setNewLevelInput('')
+    setImgMode('url')
     setFormError('')
     setShowModal(true)
   }
@@ -156,8 +161,19 @@ export default function AdminMenuPage() {
       className: 'font-medium text-surface-800',
       render: (row) => (
         <div className="flex items-center gap-3">
-          {row.image_url && (
-            <img src={row.image_url} alt={row.name} className="w-10 h-10 rounded-lg object-cover shrink-0" />
+          {row.image_url ? (
+            <button
+              type="button"
+              onClick={() => setPreviewImg({ url: row.image_url, name: row.name })}
+              className="shrink-0 w-10 h-10 rounded-lg overflow-hidden ring-2 ring-transparent hover:ring-primary-400 transition-all focus:outline-none focus:ring-primary-400"
+              title="Lihat foto"
+            >
+              <img src={row.image_url} alt={row.name} className="w-full h-full object-cover" />
+            </button>
+          ) : (
+            <div className="shrink-0 w-10 h-10 rounded-lg bg-surface-100 flex items-center justify-center">
+              <ImageIcon size={16} className="text-surface-300" />
+            </div>
           )}
           <span>{row.name}</span>
         </div>
@@ -181,6 +197,21 @@ export default function AdminMenuPage() {
       render: (row) => row.is_available
         ? <Check size={16} className="text-green-500 mx-auto" />
         : <X size={16} className="text-red-400 mx-auto" />,
+    },
+    {
+      key: 'levels', label: 'Level',
+      headerClassName: 'text-center',
+      className: 'text-center',
+      render: (row) => {
+        const lvls = Array.isArray(row.levels) ? row.levels : []
+        return lvls.length > 0
+          ? (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-orange-600 border border-orange-200">
+              <Flame size={10} /> {lvls.length}
+            </span>
+          )
+          : <span className="text-surface-300 text-xs">—</span>
+      },
     },
   ]
 
@@ -215,30 +246,18 @@ export default function AdminMenuPage() {
         searchKeys={['name']}
         emptyText="Belum ada menu"
         toolbar={
-          <div className="flex flex-wrap gap-1.5">
-            <button
-              onClick={() => { setFilterCat(''); setPage(1) }}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
-                filterCat === '' ? 'bg-primary-600 text-white' : 'bg-surface-100 text-surface-600 hover:bg-surface-200'
-              }`}
-            >
-              <LayoutGrid size={12} />Semua
-            </button>
-            {categories.map((c) => {
-              const CatIcon = getCategoryIcon(c.name)
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => { setFilterCat(String(c.id)); setPage(1) }}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
-                    filterCat === String(c.id) ? 'bg-primary-600 text-white' : 'bg-surface-100 text-surface-600 hover:bg-surface-200'
-                  }`}
-                >
-                  <CatIcon size={12} />{c.name}
-                </button>
-              )
-            })}
-          </div>
+          <SelectDropdown
+            options={categories.map((c) => ({
+              value: String(c.id),
+              label: c.name,
+              icon:  <>{React.createElement(getCategoryIcon(c.name), { size: 13 })}</>,
+            }))}
+            value={filterCat}
+            onChange={(val) => { setFilterCat(val); setPage(1) }}
+            allLabel="Semua Kategori"
+            allIcon={<LayoutGrid size={13} />}
+            placeholder="Filter Kategori"
+          />
         }
         actions={(menu) => (
           <div className="flex items-center justify-center gap-2">
@@ -354,28 +373,85 @@ export default function AdminMenuPage() {
                     </div>
                   </div>
 
-                  {/* URL Gambar + Preview */}
+                  {/* Gambar: URL atau Upload */}
                   <div>
                     <label className="block text-xs font-semibold text-surface-500 uppercase tracking-wide mb-1.5">
-                      <span className="inline-flex items-center gap-1"><ImageIcon size={11} />URL Gambar</span>
+                      <span className="inline-flex items-center gap-1"><ImageIcon size={11} />Gambar</span>
                     </label>
+
+                    {/* Mode tabs */}
+                    <div className="flex gap-1 p-1 bg-surface-100 rounded-xl mb-2.5 w-fit">
+                      <button
+                        type="button"
+                        onClick={() => { setImgMode('url'); setForm({ ...form, image_url: '' }) }}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                          imgMode === 'url' ? 'bg-white text-surface-800 shadow-sm' : 'text-surface-500 hover:text-surface-700'
+                        }`}
+                      >
+                        <Link size={11} /> URL
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setImgMode('upload'); setForm({ ...form, image_url: '' }) }}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                          imgMode === 'upload' ? 'bg-white text-surface-800 shadow-sm' : 'text-surface-500 hover:text-surface-700'
+                        }`}
+                      >
+                        <Upload size={11} /> Upload
+                      </button>
+                    </div>
+
                     <div className="flex gap-3 items-start">
-                      <input
-                        className="flex-1 border border-surface-200 bg-surface-50 rounded-2xl px-4 py-2.5 text-sm text-surface-800 placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:bg-white transition-colors"
-                        value={form.image_url}
-                        onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-                        placeholder="https://..."
-                      />
-                      {form.image_url ? (
-                        <img
-                          src={form.image_url}
-                          alt="preview"
-                          className="w-12 h-12 rounded-2xl object-cover border border-surface-200 shrink-0"
-                          onError={(e) => { e.target.style.display = 'none' }}
+                      {imgMode === 'url' ? (
+                        <input
+                          className="flex-1 border border-surface-200 bg-surface-50 rounded-2xl px-4 py-2.5 text-sm text-surface-800 placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:bg-white transition-colors"
+                          value={form.image_url}
+                          onChange={(e) => setForm({ ...form, image_url: e.target.value })}
+                          placeholder="https://..."
                         />
                       ) : (
-                        <div className="w-12 h-12 rounded-2xl bg-surface-100 border border-surface-200 flex items-center justify-center shrink-0">
-                          <ImageIcon size={18} className="text-surface-300" />
+                        <label className="flex-1 flex flex-col items-center justify-center gap-2 border-2 border-dashed border-surface-200 bg-surface-50 rounded-2xl px-4 py-4 cursor-pointer hover:border-primary-400 hover:bg-primary-50 transition-colors">
+                          <Upload size={18} className="text-surface-400" />
+                          <span className="text-xs text-surface-500 font-medium">Klik untuk pilih gambar</span>
+                          <span className="text-[10px] text-surface-400">JPG, PNG, WebP — maks 2 MB</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="sr-only"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0]
+                              if (!file) return
+                              if (file.size > 2 * 1024 * 1024) {
+                                setFormError('Ukuran gambar maks 2 MB'); return
+                              }
+                              const reader = new FileReader()
+                              reader.onload = () => setForm((f) => ({ ...f, image_url: reader.result }))
+                              reader.readAsDataURL(file)
+                            }}
+                          />
+                        </label>
+                      )}
+
+                      {/* Preview */}
+                      {form.image_url ? (
+                        <div className="relative shrink-0">
+                          <img
+                            src={form.image_url}
+                            alt="preview"
+                            className="w-14 h-14 rounded-2xl object-cover border border-surface-200"
+                            onError={(e) => { e.target.style.display = 'none' }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setForm({ ...form, image_url: '' })}
+                            className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                          >
+                            <X size={10} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="w-14 h-14 rounded-2xl bg-surface-100 border border-surface-200 flex items-center justify-center shrink-0">
+                          <ImageIcon size={20} className="text-surface-300" />
                         </div>
                       )}
                     </div>
@@ -468,6 +544,46 @@ export default function AdminMenuPage() {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Image lightbox ───────────────────────────────────────── */}
+      <AnimatePresence>
+        {previewImg && (
+          <motion.div
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            onClick={() => setPreviewImg(null)}
+          >
+            {/* backdrop */}
+            <div className="absolute inset-0 bg-black/75 backdrop-blur-md" />
+
+            {/* panel */}
+            <motion.div
+              className="relative z-10 max-w-lg w-full"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={previewImg.url}
+                alt={previewImg.name}
+                className="w-full max-h-[75vh] object-contain rounded-2xl shadow-2xl"
+              />
+              <p className="mt-3 text-center text-white/80 text-sm font-medium">{previewImg.name}</p>
+              <button
+                onClick={() => setPreviewImg(null)}
+                className="absolute -top-3 -right-3 w-8 h-8 bg-white text-surface-700 rounded-full flex items-center justify-center shadow-lg hover:bg-surface-100 transition-colors"
+              >
+                <X size={15} />
+              </button>
             </motion.div>
           </motion.div>
         )}

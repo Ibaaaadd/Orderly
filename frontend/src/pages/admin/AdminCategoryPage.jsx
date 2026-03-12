@@ -290,7 +290,7 @@ export default function AdminCategoryPage() {
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         title={editing ? 'Edit Kategori' : 'Tambah Kategori'}
-        size="sm"
+        size="xl"
       >
         <form onSubmit={handleSave} className="space-y-5">
 
@@ -315,7 +315,7 @@ export default function AdminCategoryPage() {
           {/* Icon picker */}
           <div>
             <p className="text-sm font-medium text-zinc-700 mb-2">Pilih Ikon</p>
-            <div className="grid grid-cols-5 gap-1.5 max-h-52 overflow-y-auto pr-0.5">
+            <div className="grid grid-cols-10 gap-1.5">
               {ICON_OPTIONS.map(({ key, Icon: Ic, label }) => (
                 <button
                   key={key}

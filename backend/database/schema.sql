@@ -28,7 +28,8 @@ CREATE TABLE menus (
   image_url    TEXT,
   is_available BOOLEAN NOT NULL DEFAULT TRUE,
   levels       JSONB   NOT NULL DEFAULT '[]',
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at   TIMESTAMPTZ
 );
 
 CREATE INDEX idx_menus_category ON menus(category_id);
@@ -60,6 +61,7 @@ CREATE TABLE order_items (
   id        SERIAL PRIMARY KEY,
   order_id  INT           NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
   menu_id   INT           REFERENCES menus(id) ON DELETE SET NULL,
+  menu_name VARCHAR(200),
   price     NUMERIC(12,0) NOT NULL,
   qty       INT           NOT NULL CHECK (qty > 0),
   subtotal  NUMERIC(14,0) NOT NULL,

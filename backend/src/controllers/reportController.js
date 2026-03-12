@@ -100,14 +100,14 @@ async function getTopMenus(req, res, next) {
     const limit = Math.min(parseInt(req.query.limit, 10) || 10, 50)
     const result = await query(
       `SELECT
-          m.name,
+          COALESCE(oi.menu_name, m.name, 'Menu Dihapus') AS name,
           SUM(oi.qty)      AS total_qty,
           SUM(oi.subtotal) AS total_revenue
        FROM order_items oi
        JOIN orders o ON o.id = oi.order_id
        LEFT JOIN menus m ON m.id = oi.menu_id
        WHERE o.status = 'paid'
-       GROUP BY m.name
+       GROUP BY COALESCE(oi.menu_name, m.name, 'Menu Dihapus')
        ORDER BY total_qty DESC
        LIMIT $1`,
       [limit]
@@ -118,4 +118,46 @@ async function getTopMenus(req, res, next) {
   }
 }
 
-module.exports = { getSummary, getMonthlyReport, getTopMenus }
+/**
+ * GET /api/reports/daily?year=2025&month=3
+ * Daily paid-order revenue for a given month.
+ */
+async function getDailyReport(req, res, next) {
+  try {
+    const year  = parseInt(req.query.year,  10) || new Date().getFullYear()
+    const month = parseInt(req.query.month, 10) || new Date().getMonth() + 1
+    if (year < 2000 || year > 2100 || month < 1 || month > 12) {
+      return res.status(400).json({ success: false, message: 'Parameter tidak valid' })
+    }
+
+    const result = await query(
+      `SELECT
+          EXTRACT(DAY FROM created_at AT TIME ZONE 'Asia/Jakarta')::int AS day,
+          COUNT(*) FILTER (WHERE status = 'paid')                        AS paid_orders,
+          COALESCE(SUM(total_price) FILTER (WHERE status = 'paid'), 0)   AS revenue
+       FROM orders
+       WHERE EXTRACT(YEAR  FROM created_at AT TIME ZONE 'Asia/Jakarta') = $1
+         AND EXTRACT(MONTH FROM created_at AT TIME ZONE 'Asia/Jakarta') = $2
+       GROUP BY day
+       ORDER BY day`,
+      [year, month]
+    )
+
+    // Fill every day of that month
+    const daysInMonth = new Date(year, month, 0).getDate()
+    const days = Array.from({ length: daysInMonth }, (_, i) => {
+      const found = result.rows.find((r) => r.day === i + 1)
+      return {
+        day:         i + 1,
+        paid_orders: found ? parseInt(found.paid_orders) : 0,
+        revenue:     found ? parseFloat(found.revenue)   : 0,
+      }
+    })
+
+    res.json({ success: true, data: days, year, month })
+  } catch (err) {
+    next(err)
+  }
+}
+
+module.exports = { getSummary, getMonthlyReport, getTopMenus, getDailyReport }

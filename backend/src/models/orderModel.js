@@ -22,9 +22,9 @@ const orderModel = {
       // Insert items
       for (const item of items) {
         await client.query(
-          `INSERT INTO order_items (order_id, menu_id, price, qty, subtotal, level)
-           VALUES ($1, $2, $3, $4, $5, $6)`,
-          [order.id, item.menu_id, item.price, item.qty, item.subtotal, item.level || null]
+          `INSERT INTO order_items (order_id, menu_id, menu_name, price, qty, subtotal, level)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [order.id, item.menu_id, item.menu_name || null, item.price, item.qty, item.subtotal, item.level || null]
         )
       }
 
@@ -48,9 +48,9 @@ const orderModel = {
 
     const order = orderRes.rows[0]
 
-    // Fetch items with menu names
+    // Fetch items with menu names (snapshot first, then live name, then fallback)
     const itemsRes = await query(
-      `SELECT oi.*, m.name
+      `SELECT oi.*, COALESCE(oi.menu_name, m.name, 'Menu Dihapus') AS name
        FROM order_items oi
        LEFT JOIN menus m ON m.id = oi.menu_id
        WHERE oi.order_id = $1`,
@@ -100,7 +100,7 @@ const orderModel = {
                   json_build_object(
                     'id',       oi.id,
                     'menu_id',  oi.menu_id,
-                    'name',     m.name,
+                    'name',     COALESCE(oi.menu_name, m.name, 'Menu Dihapus'),
                     'price',    oi.price,
                     'quantity', oi.qty,
                     'subtotal', oi.subtotal,
