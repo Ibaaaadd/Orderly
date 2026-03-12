@@ -44,8 +44,11 @@ CREATE TABLE orders (
   status            VARCHAR(20)  NOT NULL DEFAULT 'pending'
                     CHECK (status IN ('pending', 'paid', 'cancelled')),
   payment_reference VARCHAR(200),
+  browser_id        VARCHAR(36),
   created_at        TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
+
+CREATE INDEX idx_orders_browser_id ON orders(browser_id);
 
 CREATE INDEX idx_orders_status     ON orders(status);
 CREATE INDEX idx_orders_created_at ON orders(created_at DESC);

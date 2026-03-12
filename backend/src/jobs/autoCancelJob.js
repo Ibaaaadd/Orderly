@@ -1,7 +1,7 @@
 const { query } = require('../config/db')
 
 const INTERVAL_MS  = 60_000  // run every 60 seconds
-const TIMEOUT_MINS = 5       // cancel after 5 minutes of no payment
+const TIMEOUT_MINS = 10      // cancel after 10 minutes of no payment
 
 /**
  * Cancel all pending orders that were created more than TIMEOUT_MINS ago,

@@ -1,7 +1,7 @@
 import React from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { formatPrice } from '../../utils/formatPrice.js'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, Clock } from 'lucide-react'
 
 /**
  * QRPayment – displays QRIS QR code and payment instructions.
@@ -11,10 +11,30 @@ import { AlertCircle } from 'lucide-react'
  *  total     – number
  *  orderId   – string | number
  *  reference – string (payment reference ID)
+ *  secsLeft  – number (seconds remaining, shown as countdown timer)
  */
-export default function QRPayment({ qrisUrl, total, orderId, reference }) {
+export default function QRPayment({ qrisUrl, total, orderId, reference, secsLeft }) {
+  const mins = Math.floor(secsLeft / 60)
+  const secs = secsLeft % 60
+  const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+  const isUrgent  = secsLeft <= 60
+
   return (
     <div className="flex flex-col items-center gap-5">
+      {/* Countdown timer */}
+      {secsLeft !== undefined && (
+        <div
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-mono font-bold text-sm transition-colors ${
+            isUrgent
+              ? 'bg-red-50 border border-red-200 text-red-600'
+              : 'bg-amber-50 border border-amber-200 text-amber-700'
+          }`}
+        >
+          <Clock size={15} className={isUrgent ? 'text-red-500' : 'text-amber-500'} />
+          <span>Bayar dalam</span>
+          <span className="text-base">{formatted}</span>
+        </div>
+      )}
       {/* QR Code box */}
       <div className="bg-white rounded-3xl p-5 shadow-medium border border-surface-100">
         {qrisUrl ? (

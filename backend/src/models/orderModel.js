@@ -5,17 +5,17 @@ const { query, pool } = require('../config/db')
  */
 const orderModel = {
   /** Create order + items in a single transaction */
-  create: async ({ customer_name, customer_phone, customer_email, table_number, order_type, total_price, items }) => {
+  create: async ({ customer_name, customer_phone, customer_email, table_number, order_type, total_price, browser_id, items }) => {
     const client = await pool.connect()
     try {
       await client.query('BEGIN')
 
       // Insert order
       const orderRes = await client.query(
-        `INSERT INTO orders (customer_name, customer_phone, customer_email, table_number, order_type, total_price, status)
-         VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+        `INSERT INTO orders (customer_name, customer_phone, customer_email, table_number, order_type, total_price, status, browser_id)
+         VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7)
          RETURNING *`,
-        [customer_name, customer_phone || null, customer_email || null, table_number || null, order_type || 'dine_in', total_price]
+        [customer_name, customer_phone || null, customer_email || null, table_number || null, order_type || 'dine_in', total_price, browser_id || null]
       )
       const order = orderRes.rows[0]
 
@@ -60,8 +60,8 @@ const orderModel = {
     return order
   },
 
-  /** Get orders with optional status/search/date filter and pagination — returns { rows, total } */
-  findAll: async ({ status, search, date_from, date_to, page = 1, limit = 10 } = {}) => {
+  /** Get orders with optional status/search/date/browser_id filter and pagination — returns { rows, total } */
+  findAll: async ({ status, search, date_from, date_to, browser_id, page = 1, limit = 10 } = {}) => {
     const whereParams = []
     let where = ''
 
@@ -80,6 +80,10 @@ const orderModel = {
     if (date_to) {
       whereParams.push(date_to)
       where += ` AND DATE(o.created_at AT TIME ZONE 'Asia/Jakarta') <= $${whereParams.length}`
+    }
+    if (browser_id) {
+      whereParams.push(browser_id)
+      where += ` AND o.browser_id = $${whereParams.length}`
     }
 
     const countRes = await query(

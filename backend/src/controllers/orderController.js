@@ -9,7 +9,7 @@ const { calculateTotal } = require('../utils/calculateTotal')
  */
 async function createOrder(req, res, next) {
   try {
-    const { customer_name, customer_phone, customer_email, table_number, order_type, items } = req.body
+    const { customer_name, customer_phone, customer_email, table_number, order_type, browser_id, items } = req.body
 
     // ── Input validation ──────────────────────────────────────────
     if (!customer_name || typeof customer_name !== 'string' || !customer_name.trim()) {
@@ -72,6 +72,7 @@ async function createOrder(req, res, next) {
       customer_email: customer_email ? customer_email.trim() : null,
       table_number:   table_number ? String(table_number).trim() : null,
       order_type:     order_type || 'dine_in',
+      browser_id:     browser_id || null,
       total_price,
       items: enriched,
     })
@@ -103,17 +104,18 @@ async function getOrder(req, res, next) {
  */
 async function getAllOrders(req, res, next) {
   try {
-    const { status, search, date_from, date_to, page = '1', limit = '10' } = req.query
+    const { status, search, date_from, date_to, browser_id, page = '1', limit = '10' } = req.query
     const pageNum  = Math.max(1, parseInt(page, 10) || 1)
     const limitNum = Math.min(10000, Math.max(1, parseInt(limit, 10) || 10))
 
     const { rows, total } = await orderModel.findAll({
-      status:    status    || undefined,
-      search:    search    || undefined,
-      date_from: date_from || undefined,
-      date_to:   date_to   || undefined,
-      page:      pageNum,
-      limit:     limitNum,
+      status:     status     || undefined,
+      search:     search     || undefined,
+      date_from:  date_from  || undefined,
+      date_to:    date_to    || undefined,
+      browser_id: browser_id || undefined,
+      page:       pageNum,
+      limit:      limitNum,
     })
 
     res.json({
@@ -128,4 +130,33 @@ async function getAllOrders(req, res, next) {
   }
 }
 
-module.exports = { createOrder, getOrder, getAllOrders }
+/**
+ * PATCH /api/orders/:id/cancel
+ * Allows a customer to cancel their own pending order.
+ */
+async function cancelOrder(req, res, next) {
+  try {
+    const id = parseInt(req.params.id, 10)
+    if (!id) {
+      return res.status(400).json({ success: false, message: 'ID tidak valid' })
+    }
+
+    const order = await orderModel.findById(id)
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Pesanan tidak ditemukan' })
+    }
+    if (order.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: `Pesanan tidak dapat dibatalkan karena statusnya sudah '${order.status}'`,
+      })
+    }
+
+    const updated = await orderModel.updateStatus(id, 'cancelled')
+    res.json({ success: true, data: updated })
+  } catch (err) {
+    next(err)
+  }
+}
+
+module.exports = { createOrder, getOrder, getAllOrders, cancelOrder }
