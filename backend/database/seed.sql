@@ -143,6 +143,7 @@ DECLARE
   cust_idx     INT;
   total_menus  INT := 42;
   ref_id       TEXT;
+  ord_status   TEXT;
 BEGIN
 
   -- ── 2025 ───────────────────────────────────────────────────────
@@ -185,7 +186,8 @@ BEGIN
                + CASE WHEN m2_id IS NOT NULL THEN m2_price * qty2 ELSE 0 END
                + CASE WHEN m3_id IS NOT NULL THEN m3_price * qty3 ELSE 0 END;
 
-      ref_id := 'ORD-' || yr || LPAD(mo::TEXT,2,'0') || LPAD(i::TEXT,3,'0') || '-P';
+      ref_id     := 'ORD-' || yr || LPAD(mo::TEXT,2,'0') || LPAD(i::TEXT,3,'0') || '-P';
+      ord_status := 'completed';
 
       INSERT INTO orders
         (customer_name, table_number, order_type, total_price, status, payment_reference, created_at)
@@ -194,7 +196,7 @@ BEGIN
         tbl_nums[1 + (random() * 11)::INT],
         order_types[1 + (random() * 3)::INT],
         t_price,
-        'paid',
+        ord_status,
         ref_id,
         make_timestamptz(yr, mo, day_offset,
           8 + (random() * 13)::INT,
@@ -296,7 +298,11 @@ BEGIN
                + CASE WHEN m2_id IS NOT NULL THEN m2_price * qty2 ELSE 0 END
                + CASE WHEN m3_id IS NOT NULL THEN m3_price * qty3 ELSE 0 END;
 
-      ref_id := 'ORD-' || yr || LPAD(mo::TEXT,2,'0') || LPAD(i::TEXT,3,'0') || '-P';
+      ref_id     := 'ORD-' || yr || LPAD(mo::TEXT,2,'0') || LPAD(i::TEXT,3,'0') || '-P';
+      ord_status := CASE
+        WHEN mo < 3 THEN 'completed'
+        ELSE (ARRAY['paid', 'ready', 'completed'])[1 + (random() * 2)::INT]
+      END;
 
       INSERT INTO orders
         (customer_name, table_number, order_type, total_price, status, payment_reference, created_at)
@@ -305,7 +311,7 @@ BEGIN
         tbl_nums[1 + (random() * 11)::INT],
         order_types[1 + (random() * 3)::INT],
         t_price,
-        'paid',
+        ord_status,
         ref_id,
         make_timestamptz(yr, mo, day_offset,
           8 + (random() * 13)::INT,

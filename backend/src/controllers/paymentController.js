@@ -100,4 +100,94 @@ async function handleWebhook(req, res, next) {
   }
 }
 
-module.exports = { createPayment, handleWebhook }
+/**
+ * POST /api/payments/cash
+ * Body: { order_id }
+ *
+ * Initiates a cash payment — creates a pending payment record and flags the order
+ * with a CASH reference. Order stays 'pending' until cashier confirms.
+ */
+async function createCashPayment(req, res, next) {
+  try {
+    const { order_id } = req.body
+
+    if (!order_id) {
+      return res.status(400).json({ success: false, message: 'order_id wajib diisi' })
+    }
+
+    const order = await orderModel.findById(parseInt(order_id, 10))
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Pesanan tidak ditemukan' })
+    }
+    if (order.status === 'paid') {
+      return res.status(400).json({ success: false, message: 'Pesanan sudah dibayar' })
+    }
+    if (order.status === 'cancelled') {
+      return res.status(400).json({ success: false, message: 'Pesanan sudah dibatalkan' })
+    }
+
+    // If already initiated, return existing payment
+    const existing = await paymentModel.findByOrderId(order.id)
+    if (existing && existing.gateway === 'cash') {
+      return res.json({ success: true, data: existing })
+    }
+
+    const reference_id = `CASH-${order.id}-${Date.now()}`
+
+    // Create payment record (pending) and flag the order
+    const payment = await paymentModel.create({
+      order_id:     order.id,
+      gateway:      'cash',
+      reference_id,
+      qris_url:     null,
+    })
+    await orderModel.setPaymentReference(order.id, reference_id)
+
+    res.status(201).json({ success: true, data: payment })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * PATCH /api/payments/cash/:orderId/confirm
+ *
+ * Cashier confirms cash received — marks order & payment as paid.
+ */
+async function confirmCashPayment(req, res, next) {
+  try {
+    const orderId = parseInt(req.params.orderId, 10)
+    if (!orderId) {
+      return res.status(400).json({ success: false, message: 'orderId tidak valid' })
+    }
+
+    const order = await orderModel.findById(orderId)
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Pesanan tidak ditemukan' })
+    }
+    if (order.status === 'paid') {
+      return res.json({ success: true, message: 'Pesanan sudah lunas' })
+    }
+    if (order.status === 'cancelled') {
+      return res.status(400).json({ success: false, message: 'Pesanan sudah dibatalkan' })
+    }
+    if (!order.payment_reference?.startsWith('CASH')) {
+      return res.status(400).json({ success: false, message: 'Bukan pesanan tunai' })
+    }
+
+    const payment = await paymentModel.findByOrderId(orderId)
+    if (!payment) {
+      return res.status(404).json({ success: false, message: 'Data pembayaran tidak ditemukan' })
+    }
+
+    await paymentModel.updateStatus(payment.id, 'paid')
+    await orderModel.updateStatus(orderId, 'paid')
+
+    console.log(`[Cash] Order #${orderId} confirmed as PAID`)
+    res.json({ success: true, data: { ...payment, payment_status: 'paid' } })
+  } catch (err) {
+    next(err)
+  }
+}
+
+module.exports = { createPayment, handleWebhook, createCashPayment, confirmCashPayment }

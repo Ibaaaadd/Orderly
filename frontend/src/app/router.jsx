@@ -8,6 +8,7 @@ import CartPage from '../pages/CartPage.jsx'
 import PaymentPage from '../pages/PaymentPage.jsx'
 import SuccessPage from '../pages/SuccessPage.jsx'
 import OrdersPage from '../pages/OrdersPage.jsx'
+import KitchenPage from '../pages/KitchenPage.jsx'
 
 // Lazy-load admin pages to split heavy chart / print libraries into a separate chunk
 const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage.jsx'))
@@ -62,6 +63,10 @@ export const router = createBrowserRouter([
       { path: '/success/:orderId', element: <SuccessPage /> },
       { path: '/orders',     element: <OrdersPage /> },
     ],
+  },
+  {
+    path: '/kitchen',
+    element: <KitchenPage />,
   },
   {
     path: '/admin',

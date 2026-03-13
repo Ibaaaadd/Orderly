@@ -1,10 +1,10 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ClipboardList, ChevronRight, RefreshCw, Phone, Mail, UtensilsCrossed, ShoppingBag } from 'lucide-react'
+import { ClipboardList, ChevronRight, RefreshCw, Phone, Mail, UtensilsCrossed, ShoppingBag, Banknote } from 'lucide-react'
 import Container from '../components/layout/Container.jsx'
 import Badge from '../components/ui/Badge.jsx'
-import { Spinner, SkeletonBox } from '../components/ui/Loader.jsx'
+import { SkeletonBox } from '../components/ui/Loader.jsx'
 import { formatPrice } from '../utils/formatPrice.js'
 import orderService from '../services/orderService.js'
 import useFetch from '../hooks/useFetch.js'
@@ -15,12 +15,14 @@ import useFetch from '../hooks/useFetch.js'
 const statusVariant = {
   pending:   'warning',
   paid:      'success',
+  ready:     'success',
   cancelled: 'danger',
 }
 
 const statusLabel = {
   pending:   'Menunggu',
   paid:      'Lunas',
+  ready:     'Siap',
   cancelled: 'Dibatalkan',
 }
 
@@ -43,7 +45,6 @@ export default function OrdersPage() {
     () => orderService.getAllOrders(),
     []
   )
-
   const orders = data?.data || []
 
   return (
@@ -144,6 +145,11 @@ export default function OrdersPage() {
                       {formatPrice(order.total_price)}
                     </span>
                     <div className="flex items-center gap-2">
+                      {order.payment_reference?.startsWith('CASH') && (
+                        <span className="flex items-center gap-0.5 text-xs font-semibold text-emerald-600">
+                          <Banknote size={11} /> Tunai
+                        </span>
+                      )}
                       {order.order_type === 'takeaway' ? (
                         <span className="flex items-center gap-0.5 text-xs text-zinc-400">
                           <ShoppingBag size={11} /> Bawa Pulang

@@ -45,7 +45,7 @@ CREATE TABLE orders (
                     CHECK (order_type IN ('dine_in', 'takeaway')),
   total_price       NUMERIC(14, 0) NOT NULL CHECK (total_price >= 0),
   status            VARCHAR(20)  NOT NULL DEFAULT 'pending'
-                    CHECK (status IN ('pending', 'paid', 'cancelled')),
+                    CHECK (status IN ('pending', 'paid', 'cancelled', 'ready', 'completed')),
   payment_reference VARCHAR(200),
   browser_id        VARCHAR(36),
   created_at        TIMESTAMPTZ  NOT NULL DEFAULT NOW()

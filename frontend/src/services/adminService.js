@@ -13,7 +13,8 @@ export const updateMenu = (id, data) => api.put(`/menus/${id}`, data)
 export const deleteMenu = (id) => api.delete(`/menus/${id}`)
 
 // ─── Orders ───────────────────────────────────────────────────
-export const getOrders = (params) => api.get('/orders', { params })
+export const getOrders       = (params) => api.get('/orders', { params })
+export const markOrderReady  = (id)     => api.patch(`/orders/${id}/ready`)
 
 // ─── Reports ──────────────────────────────────────────────────
 export const getReportSummary   = ()     => api.get('/reports/summary')

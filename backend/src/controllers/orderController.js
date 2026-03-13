@@ -159,4 +159,62 @@ async function cancelOrder(req, res, next) {
   }
 }
 
-module.exports = { createOrder, getOrder, getAllOrders, cancelOrder }
+/**
+ * PATCH /api/orders/:id/ready
+ * Kitchen marks a paid order as ready/prepared.
+ */
+async function markReady(req, res, next) {
+  try {
+    const id = parseInt(req.params.id, 10)
+    if (!id) {
+      return res.status(400).json({ success: false, message: 'ID tidak valid' })
+    }
+
+    const order = await orderModel.findById(id)
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Pesanan tidak ditemukan' })
+    }
+    if (order.status !== 'paid') {
+      return res.status(400).json({
+        success: false,
+        message: `Hanya pesanan berstatus 'paid' yang bisa ditandai siap`,
+      })
+    }
+
+    const updated = await orderModel.updateStatus(id, 'ready')
+    res.json({ success: true, data: updated })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * PATCH /api/orders/:id/complete
+ * Kitchen confirms order has been delivered to the table.
+ */
+async function markCompleted(req, res, next) {
+  try {
+    const id = parseInt(req.params.id, 10)
+    if (!id) {
+      return res.status(400).json({ success: false, message: 'ID tidak valid' })
+    }
+
+    const order = await orderModel.findById(id)
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Pesanan tidak ditemukan' })
+    }
+    if (order.status !== 'ready') {
+      return res.status(400).json({
+        success: false,
+        message: `Hanya pesanan berstatus 'ready' yang bisa ditandai selesai diantar`,
+      })
+    }
+
+    const updated = await orderModel.updateStatus(id, 'completed')
+    res.json({ success: true, data: updated })
+  } catch (err) {
+    next(err)
+  }
+}
+
+module.exports = { createOrder, getOrder, getAllOrders, cancelOrder, markReady, markCompleted }

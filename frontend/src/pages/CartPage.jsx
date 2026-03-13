@@ -9,7 +9,6 @@ import Input from '../components/ui/Input.jsx'
 import { useToast } from '../components/ui/Toast.jsx'
 import useCartStore from '../store/cartStore.js'
 import orderService from '../services/orderService.js'
-import paymentService from '../services/paymentService.js'
 
 /**
  * CartPage – full-page cart view (alternative to drawer).
@@ -61,7 +60,6 @@ export default function CartPage() {
         order_type:     orderType,
         items: items.map((i) => ({ menu_id: i.id, qty: i.qty, ...(i.level ? { level: i.level } : {}) })),
       })
-      await paymentService.createPayment(order.data.id)
       clearCart()
       navigate(`/payment/${order.data.id}`)
     } catch (err) {

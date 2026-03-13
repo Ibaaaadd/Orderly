@@ -10,22 +10,22 @@ async function getSummary(req, res, next) {
       SELECT
         COUNT(*)                                                        AS total_orders,
         COUNT(*) FILTER (WHERE DATE(created_at AT TIME ZONE 'Asia/Jakarta') = CURRENT_DATE) AS orders_today,
-        COUNT(*) FILTER (WHERE status = 'pending')                     AS orders_pending,
-        COUNT(*) FILTER (WHERE status = 'paid')                        AS orders_paid,
-        COUNT(*) FILTER (WHERE status = 'cancelled')                   AS orders_cancelled,
-        COALESCE(SUM(total_price) FILTER (WHERE status = 'paid'), 0)   AS total_revenue,
+        COUNT(*) FILTER (WHERE status = 'pending')                                         AS orders_pending,
+        COUNT(*) FILTER (WHERE status IN ('paid','ready','completed'))                      AS orders_paid,
+        COUNT(*) FILTER (WHERE status = 'cancelled')                                        AS orders_cancelled,
+        COALESCE(SUM(total_price) FILTER (WHERE status IN ('paid','ready','completed')), 0) AS total_revenue,
         COALESCE(
           SUM(total_price) FILTER (
-            WHERE status = 'paid'
+            WHERE status IN ('paid','ready','completed')
             AND DATE(created_at AT TIME ZONE 'Asia/Jakarta') = CURRENT_DATE
           ), 0
-        )                                                               AS revenue_today,
+        )                                                                                   AS revenue_today,
         COALESCE(
           SUM(total_price) FILTER (
-            WHERE status = 'paid'
+            WHERE status IN ('paid','ready','completed')
             AND DATE_TRUNC('month', created_at) = DATE_TRUNC('month', NOW())
           ), 0
-        )                                                               AS revenue_this_month
+        )                                                                                   AS revenue_this_month
       FROM orders
     `)
 
@@ -63,9 +63,9 @@ async function getMonthlyReport(req, res, next) {
       `SELECT
           EXTRACT(MONTH FROM created_at)::int      AS month,
           COUNT(*)                                  AS total_orders,
-          COUNT(*) FILTER (WHERE status = 'paid')  AS paid_orders,
-          COUNT(*) FILTER (WHERE status = 'cancelled') AS cancelled_orders,
-          COALESCE(SUM(total_price) FILTER (WHERE status = 'paid'), 0) AS revenue
+          COUNT(*) FILTER (WHERE status IN ('paid','ready','completed'))                      AS paid_orders,
+          COUNT(*) FILTER (WHERE status = 'cancelled')                                        AS cancelled_orders,
+          COALESCE(SUM(total_price) FILTER (WHERE status IN ('paid','ready','completed')), 0) AS revenue
        FROM orders
        WHERE EXTRACT(YEAR FROM created_at) = $1
        GROUP BY EXTRACT(MONTH FROM created_at)
@@ -106,7 +106,7 @@ async function getTopMenus(req, res, next) {
        FROM order_items oi
        JOIN orders o ON o.id = oi.order_id
        LEFT JOIN menus m ON m.id = oi.menu_id
-       WHERE o.status = 'paid'
+       WHERE o.status IN ('paid','ready','completed')
        GROUP BY COALESCE(oi.menu_name, m.name, 'Menu Dihapus')
        ORDER BY total_qty DESC
        LIMIT $1`,
@@ -133,8 +133,8 @@ async function getDailyReport(req, res, next) {
     const result = await query(
       `SELECT
           EXTRACT(DAY FROM created_at AT TIME ZONE 'Asia/Jakarta')::int AS day,
-          COUNT(*) FILTER (WHERE status = 'paid')                        AS paid_orders,
-          COALESCE(SUM(total_price) FILTER (WHERE status = 'paid'), 0)   AS revenue
+          COUNT(*) FILTER (WHERE status IN ('paid','ready','completed'))                      AS paid_orders,
+          COALESCE(SUM(total_price) FILTER (WHERE status IN ('paid','ready','completed')), 0) AS revenue
        FROM orders
        WHERE EXTRACT(YEAR  FROM created_at AT TIME ZONE 'Asia/Jakarta') = $1
          AND EXTRACT(MONTH FROM created_at AT TIME ZONE 'Asia/Jakarta') = $2

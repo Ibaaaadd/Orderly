@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { ShoppingCart, ChefHat, ClipboardList, LayoutDashboard } from 'lucide-react'
+import { ShoppingCart, ChefHat, ClipboardList, LayoutDashboard, UtensilsCrossed } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import useCartStore from '../../store/cartStore.js'
 
@@ -44,6 +44,20 @@ export default function Navbar() {
             aria-label="Riwayat pesanan"
           >
             <ClipboardList size={20} />
+          </Link>
+
+          {/* Kitchen display */}
+          <Link
+            to="/kitchen"
+            className={[
+              'p-2 rounded-xl transition-colors',
+              pathname === '/kitchen'
+                ? 'bg-orange-50 text-orange-600'
+                : 'text-zinc-500 hover:bg-surface-100 hover:text-zinc-700',
+            ].join(' ')}
+            aria-label="Kitchen display"
+          >
+            <UtensilsCrossed size={20} />
           </Link>
 
           {/* Admin panel */}

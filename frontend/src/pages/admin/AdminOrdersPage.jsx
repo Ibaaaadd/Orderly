@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { RefreshCw, Printer, Clock, CheckCircle2, XCircle, LayoutGrid, UtensilsCrossed, ShoppingBag, Users, FileSpreadsheet, CalendarDays, X } from 'lucide-react'
+import { RefreshCw, Printer, Clock, CheckCircle2, XCircle, UtensilsCrossed, ShoppingBag, Users, FileSpreadsheet, CalendarDays, X, Banknote, LayoutGrid, Bike } from 'lucide-react'
 import XLSX from 'xlsx-js-style'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
+import SelectDropdown from '../../components/ui/SelectDropdown'
 import * as adminService from '../../services/adminService'
+import paymentService from '../../services/paymentService'
 import { formatPrice } from '../../utils/formatPrice'
 import DataTable from '../../components/ui/DataTable'
 import Receipt from '../../components/ui/Receipt'
@@ -13,18 +15,24 @@ import orderService from '../../services/orderService'
 const STATUS_STYLES = {
   pending:   'bg-yellow-50 text-yellow-700 border border-yellow-200',
   paid:      'bg-green-50 text-green-700 border border-green-200',
+  ready:     'bg-blue-50 text-blue-700 border border-blue-200',
+  completed: 'bg-indigo-50 text-indigo-700 border border-indigo-200',
   cancelled: 'bg-red-50 text-red-600 border border-red-200',
 }
 
 const STATUS_ICONS = {
   pending:   Clock,
   paid:      CheckCircle2,
+  ready:     UtensilsCrossed,
+  completed: CheckCircle2,
   cancelled: XCircle,
 }
 
 const STATUS_LABELS = {
   pending:   'Menunggu',
   paid:      'Lunas',
+  ready:     'Siap Antar',
+  completed: 'Selesai',
   cancelled: 'Dibatalkan',
 }
 
@@ -75,6 +83,7 @@ export default function AdminOrdersPage() {
   const [error, setError]         = useState('')
   const [receipt, setReceipt]     = useState(null)
   const [loadingReceipt, setLoadingReceipt] = useState(null)
+  const [confirmingId, setConfirmingId]     = useState(null)
   const [filterStatus, setFilterStatus]     = useState('')
   const [page, setPage]           = useState(1)
   const [pageSize, setPageSize]   = useState(10)
@@ -244,6 +253,8 @@ export default function AdminOrdersPage() {
       // ── Data rows ──────────────────────────────────────────────
       const STATUS_CELL = {
         paid:      { bg: P.GREEN_BG, fg: P.GREEN_FG },
+        ready:     { bg: 'DBEAFE',   fg: '1E40AF'   },
+        completed: { bg: 'E0E7FF',   fg: '3730A3'   },
         pending:   { bg: P.YLW_BG,  fg: P.YLW_FG  },
         cancelled: { bg: P.RED_BG,  fg: P.RED_FG  },
       }
@@ -325,6 +336,18 @@ export default function AdminOrdersPage() {
     return () => clearInterval(timer)
   }, [load])
 
+  async function handleConfirmCash(orderId) {
+    setConfirmingId(orderId)
+    try {
+      await paymentService.confirmCashPayment(orderId)
+      await load()
+    } catch {
+      toast('Gagal konfirmasi pembayaran tunai', 'error')
+    } finally {
+      setConfirmingId(null)
+    }
+  }
+
   async function openReceipt(order) {
     if (Array.isArray(order.items) && order.items.length > 0) {
       setReceipt(order)
@@ -340,13 +363,6 @@ export default function AdminOrdersPage() {
       setLoadingReceipt(null)
     }
   }
-
-  const STATUS_FILTERS = [
-    { value: '',          label: 'Semua',     Icon: LayoutGrid,   active: 'bg-primary-600 text-white',                     inactive: 'bg-surface-100 text-surface-600 hover:bg-surface-200' },
-    { value: 'pending',   label: 'Menunggu',  Icon: Clock,        active: 'bg-yellow-500 text-white',                      inactive: 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100' },
-    { value: 'paid',      label: 'Lunas',     Icon: CheckCircle2, active: 'bg-green-500 text-white',                       inactive: 'bg-green-50 text-green-700 hover:bg-green-100' },
-    { value: 'cancelled', label: 'Dibatalkan',Icon: XCircle,      active: 'bg-red-500 text-white',                         inactive: 'bg-red-50 text-red-600 hover:bg-red-100' },
-  ]
 
   const columns = [
     {
@@ -503,35 +519,51 @@ export default function AdminOrdersPage() {
             </div>
             {/* Divider */}
             <div className="w-px h-6 bg-surface-200 shrink-0" />
-            {/* Status filters */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              {STATUS_FILTERS.map(({ value, label, Icon, active, inactive }) => (
-                <button
-                  key={value}
-                  onClick={() => { setFilterStatus(value); setPage(1) }}
-                  className={`inline-flex items-center gap-1.5 px-3 h-9 rounded-xl text-xs font-semibold transition-colors ${
-                    filterStatus === value ? active : inactive
-                  }`}
-                >
-                  <Icon size={12} />{label}
-                </button>
-              ))}
-            </div>
+            {/* Status filter dropdown */}
+            <SelectDropdown
+              searchable={false}
+              allLabel="Semua Status"
+              allIcon={<LayoutGrid size={13} />}
+              value={filterStatus}
+              onChange={(val) => { setFilterStatus(val); setPage(1) }}
+              placeholder="Filter Status"
+              options={[
+                { value: 'pending',   label: 'Menunggu',   icon: <Clock size={13} />,           iconClass: 'text-yellow-500',  activeClass: 'bg-yellow-500 text-white border-yellow-500 shadow-sm',   listActiveClass: 'bg-yellow-50 text-yellow-700',  listHoverClass: 'hover:bg-yellow-50 hover:text-yellow-700' },
+                { value: 'paid',      label: 'Lunas',      icon: <CheckCircle2 size={13} />,    iconClass: 'text-green-600',   activeClass: 'bg-green-600 text-white border-green-600 shadow-sm',    listActiveClass: 'bg-green-50 text-green-700',    listHoverClass: 'hover:bg-green-50 hover:text-green-700' },
+                { value: 'ready',     label: 'Siap Antar', icon: <UtensilsCrossed size={13} />, iconClass: 'text-blue-500',    activeClass: 'bg-blue-500 text-white border-blue-500 shadow-sm',      listActiveClass: 'bg-blue-50 text-blue-700',      listHoverClass: 'hover:bg-blue-50 hover:text-blue-700' },
+                { value: 'completed', label: 'Selesai',    icon: <Bike size={13} />,            iconClass: 'text-indigo-500',  activeClass: 'bg-indigo-500 text-white border-indigo-500 shadow-sm',  listActiveClass: 'bg-indigo-50 text-indigo-700',  listHoverClass: 'hover:bg-indigo-50 hover:text-indigo-700' },
+                { value: 'cancelled', label: 'Dibatalkan', icon: <XCircle size={13} />,         iconClass: 'text-red-500',     activeClass: 'bg-red-500 text-white border-red-500 shadow-sm',        listActiveClass: 'bg-red-50 text-red-700',        listHoverClass: 'hover:bg-red-50 hover:text-red-700' },
+              ]}
+            />
           </div>
         }
         actions={(row) => (
-          <button
-            onClick={() => openReceipt(row)}
-            disabled={loadingReceipt === row.id}
-            title="Lihat & Cetak Struk"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-surface-200 text-surface-600 hover:bg-primary-50 hover:text-primary-700 hover:border-primary-200 transition-colors disabled:opacity-40"
-          >
-            {loadingReceipt === row.id
-              ? <RefreshCw size={12} className="animate-spin" />
-              : <Printer size={12} />
-            }
-            Struk
-          </button>
+          <div className="flex items-center gap-1.5">
+            {row.status === 'pending' && row.payment_reference?.startsWith('CASH') && (
+              <button
+                onClick={() => handleConfirmCash(row.id)}
+                disabled={confirmingId === row.id}
+                title="Konfirmasi Pembayaran Tunai"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-colors disabled:opacity-40"
+              >
+                {confirmingId === row.id
+                  ? <RefreshCw size={12} className="animate-spin" />
+                  : <Banknote size={12} />}
+                Konfirmasi Tunai
+              </button>
+            )}
+            <button
+              onClick={() => openReceipt(row)}
+              disabled={loadingReceipt === row.id}
+              title="Lihat & Cetak Struk"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-surface-200 text-surface-600 hover:bg-primary-50 hover:text-primary-700 hover:border-primary-200 transition-colors disabled:opacity-40"
+            >
+              {loadingReceipt === row.id
+                ? <RefreshCw size={12} className="animate-spin" />
+                : <Printer size={12} />}
+              Struk
+            </button>
+          </div>
         )}
       />
 

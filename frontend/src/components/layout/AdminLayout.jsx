@@ -1,6 +1,6 @@
 import React from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
-import { LayoutDashboard, ChefHat, Tag, ClipboardList, TrendingUp, BookOpen } from 'lucide-react'
+import { LayoutDashboard, ChefHat, Tag, ClipboardList, TrendingUp, BookOpen, UtensilsCrossed } from 'lucide-react'
 
 const navItems = [
   { to: '/admin',            label: 'Dashboard',        Icon: LayoutDashboard, end: true },
@@ -42,6 +42,13 @@ export default function AdminLayout() {
         </nav>
 
         <div className="p-3 border-t border-surface-200">
+          <NavLink
+            to="/kitchen"
+            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-orange-600 hover:bg-orange-50 transition-colors"
+          >
+            <UtensilsCrossed size={18} />
+            Kitchen Display
+          </NavLink>
           <NavLink
             to="/"
             className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-surface-500 hover:bg-surface-100 hover:text-surface-700 transition-colors"
