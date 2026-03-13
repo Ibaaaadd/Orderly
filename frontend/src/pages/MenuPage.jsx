@@ -27,7 +27,11 @@ export default function MenuPage() {
   // Fetch menus (re-fetch when category changes)
   const { data: menuData, loading: menuLoading } = useFetch(
     () => {
-      const url = activeCategory ? `/menus?category_id=${activeCategory}` : '/menus'
+      const params = new URLSearchParams({ limit: '100' })
+      if (activeCategory) {
+        params.set('category_id', activeCategory)
+      }
+      const url = `/menus?${params.toString()}`
       return api.get(url)
     },
     [activeCategory]
@@ -65,7 +69,12 @@ export default function MenuPage() {
         </div>
 
         {/* Menu grid */}
-        <MenuGrid menus={menus} loading={menuLoading || catLoading} />
+        <MenuGrid
+          menus={menus}
+          categories={categories}
+          activeCategory={activeCategory}
+          loading={menuLoading || catLoading}
+        />
       </Container>
 
       {/* Sticky floating cart button */}
