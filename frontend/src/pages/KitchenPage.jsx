@@ -33,6 +33,20 @@ function urgencyClasses(dateStr) {
   return { card: 'border-red-200 bg-red-50', badge: 'bg-red-100 text-red-700', dot: 'bg-red-500', glow: 'shadow-red-100' }
 }
 
+function normalizePackageSelections(item) {
+  const value = item?.package_selections
+  if (Array.isArray(value)) return value
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+  return []
+}
+
 function OrderCard({ order, onMarkReady, onMarkCompleted, isMarking }) {
   const [elapsed, setElapsed] = useState(() => elapsedLabel(order.created_at))
   const cls = urgencyClasses(order.created_at)
@@ -94,7 +108,22 @@ function OrderCard({ order, onMarkReady, onMarkCompleted, isMarking }) {
                   {item.name}
                 </p>
                 {item.level && (
-                  <p className="text-xs text-zinc-400">{item.level}</p>
+                  <p className="text-xs text-zinc-400">Level {item.level}</p>
+                )}
+
+                {normalizePackageSelections(item).length > 0 && (
+                  <div className="mt-1 space-y-1">
+                    {normalizePackageSelections(item).map((selection) => (
+                      <p
+                        key={selection.id || `${selection.menu_id}-${selection.menu_name}-${selection.qty}`}
+                        className="text-xs text-zinc-500 leading-tight"
+                      >
+                        ↳ {selection.menu_name || 'Item Paket'}
+                        {selection.selected_level ? ` (Level ${selection.selected_level})` : ''}
+                        <span className="text-zinc-400"> ×{selection.qty ?? 1}</span>
+                      </p>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>

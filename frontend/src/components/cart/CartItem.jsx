@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Minus, Plus, Trash2, ChevronDown } from 'lucide-react'
 import { formatPrice } from '../../utils/formatPrice.js'
+import { formatPackageSelectionLine } from '../../utils/packageSelections.js'
 import useCartStore from '../../store/cartStore.js'
 
 /**
@@ -16,6 +17,7 @@ export default function CartItem({ item }) {
 
   const [showLevelPicker, setShowLevelPicker] = useState(false)
   const hasLevels = Array.isArray(item.levels) && item.levels.length > 0
+  const packageSelections = Array.isArray(item.package_selections) ? item.package_selections : []
 
   return (
     <motion.div
@@ -43,6 +45,20 @@ export default function CartItem({ item }) {
         {/* Name + level badge + subtotal */}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-zinc-800 truncate">{item.name}</p>
+          {packageSelections.length > 0 && (
+            <div className="mt-1 space-y-1">
+              {packageSelections.slice(0, 3).map((entry, index) => (
+                <p key={`${item.cartKey}-package-${index}`} className="text-[11px] text-zinc-500 leading-4">
+                  {formatPackageSelectionLine(entry)}
+                </p>
+              ))}
+              {packageSelections.length > 3 && (
+                <p className="text-[11px] font-medium text-zinc-400">
+                  +{packageSelections.length - 3} pilihan lain
+                </p>
+              )}
+            </div>
+          )}
           {hasLevels && (
             <button
               onClick={() => setShowLevelPicker((v) => !v)}

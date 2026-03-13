@@ -21,11 +21,36 @@ const orderModel = {
 
       // Insert items
       for (const item of items) {
-        await client.query(
+        const itemRes = await client.query(
           `INSERT INTO order_items (order_id, menu_id, menu_name, price, qty, subtotal, level)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           RETURNING id`,
           [order.id, item.menu_id, item.menu_name || null, item.price, item.qty, item.subtotal, item.level || null]
         )
+
+        const orderItemId = itemRes.rows[0].id
+        const selections = Array.isArray(item.package_selections) ? item.package_selections : []
+        for (const selection of selections) {
+          await client.query(
+            `INSERT INTO order_item_package_selections (
+               order_item_id,
+               package_menu_rule_id,
+               selected_menu_id,
+               selected_menu_name,
+               selected_level,
+               qty
+             )
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [
+              orderItemId,
+              selection.package_menu_rule_id || null,
+              selection.selected_menu_id || null,
+              selection.selected_menu_name || null,
+              selection.selected_level || null,
+              selection.qty,
+            ]
+          )
+        }
       }
 
       await client.query('COMMIT')
@@ -50,7 +75,26 @@ const orderModel = {
 
     // Fetch items with menu names (snapshot first, then live name, then fallback)
     const itemsRes = await query(
-      `SELECT oi.*, COALESCE(oi.menu_name, m.name, 'Menu Dihapus') AS name
+      `SELECT oi.*,
+              COALESCE(oi.menu_name, m.name, 'Menu Dihapus') AS name,
+              COALESCE(
+                (
+                  SELECT json_agg(
+                    json_build_object(
+                      'id', ops.id,
+                      'package_menu_rule_id', ops.package_menu_rule_id,
+                      'menu_id', ops.selected_menu_id,
+                      'menu_name', COALESCE(ops.selected_menu_name, sm.name, 'Menu Dihapus'),
+                      'selected_level', ops.selected_level,
+                      'qty', ops.qty
+                    ) ORDER BY ops.id
+                  )
+                  FROM order_item_package_selections ops
+                  LEFT JOIN menus sm ON sm.id = ops.selected_menu_id
+                  WHERE ops.order_item_id = oi.id
+                ),
+                '[]'
+              ) AS package_selections
        FROM order_items oi
        LEFT JOIN menus m ON m.id = oi.menu_id
        WHERE oi.order_id = $1`,
@@ -104,7 +148,26 @@ const orderModel = {
                     'price',    oi.price,
                     'quantity', oi.qty,
                     'subtotal', oi.subtotal,
-                    'level',    oi.level
+                    'level',    oi.level,
+                    'package_selections',
+                    COALESCE(
+                      (
+                        SELECT json_agg(
+                          json_build_object(
+                            'id', ops.id,
+                            'package_menu_rule_id', ops.package_menu_rule_id,
+                            'menu_id', ops.selected_menu_id,
+                            'menu_name', COALESCE(ops.selected_menu_name, sm.name, 'Menu Dihapus'),
+                            'selected_level', ops.selected_level,
+                            'qty', ops.qty
+                          ) ORDER BY ops.id
+                        )
+                        FROM order_item_package_selections ops
+                        LEFT JOIN menus sm ON sm.id = ops.selected_menu_id
+                        WHERE ops.order_item_id = oi.id
+                      ),
+                      '[]'
+                    )
                   ) ORDER BY oi.id
                 ) FILTER (WHERE oi.id IS NOT NULL),
                 '[]'

@@ -26,10 +26,11 @@ export default function SelectDropdown({
   placeholder,
   className = '',
   searchable = true,
+  fullWidth = false,
 }) {
   const [open, setOpen]         = useState(false)
   const [query, setQuery]       = useState('')
-  const [dropPos, setDropPos]   = useState({ top: 0, left: 0, width: 224 })
+  const [dropPos, setDropPos]   = useState({ top: 0, left: 0, width: 224, maxPanelHeight: 320, openUp: false })
   const containerRef            = useRef(null)
   const panelRef                = useRef(null)
   const searchRef               = useRef(null)
@@ -46,13 +47,11 @@ export default function SelectDropdown({
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  // Close on scroll / resize so stale position doesn't linger
+  // Close on resize so stale position doesn't linger
   useEffect(() => {
     function handler() { setOpen(false) }
-    window.addEventListener('scroll', handler, true)
     window.addEventListener('resize', handler)
     return () => {
-      window.removeEventListener('scroll', handler, true)
       window.removeEventListener('resize', handler)
     }
   }, [])
@@ -77,10 +76,31 @@ export default function SelectDropdown({
   function toggle() {
     if (!open && containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect()
+      const viewportGap = 10
+      const preferredPanelHeight = searchable ? 320 : 280
+      const minPanelHeight = 180
+      const spaceBelow = window.innerHeight - rect.bottom - viewportGap
+      const spaceAbove = rect.top - viewportGap
+      const openUp = spaceBelow < minPanelHeight && spaceAbove > spaceBelow
+      const maxPanelHeight = Math.max(
+        minPanelHeight,
+        Math.min(preferredPanelHeight, openUp ? spaceAbove : spaceBelow)
+      )
+      const desiredWidth = Math.max(rect.width, 224)
+      const width = Math.min(desiredWidth, window.innerWidth - (viewportGap * 2))
+      const left = Math.min(
+        Math.max(viewportGap, rect.left),
+        window.innerWidth - width - viewportGap
+      )
+
       setDropPos({
-        top:   rect.bottom + 6,
-        left:  rect.left,
-        width: Math.max(rect.width, 224),
+        top: openUp
+          ? Math.max(viewportGap, rect.top - maxPanelHeight - 6)
+          : rect.bottom + 6,
+        left,
+        width,
+        maxPanelHeight,
+        openUp,
       })
     }
     setOpen((v) => !v)
@@ -99,7 +119,13 @@ export default function SelectDropdown({
   const panel = open && createPortal(
     <div
       ref={panelRef}
-      style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, width: dropPos.width }}
+      style={{
+        position: 'fixed',
+        top: dropPos.top,
+        left: dropPos.left,
+        width: dropPos.width,
+        maxHeight: dropPos.maxPanelHeight,
+      }}
       className="z-[9999] bg-white border border-surface-200 rounded-2xl shadow-lg overflow-hidden"
     >
       {/* Search */}
@@ -120,7 +146,15 @@ export default function SelectDropdown({
       )}
 
       {/* Options */}
-      <ul className="max-h-56 overflow-y-auto py-1">
+      <ul
+        className="overflow-y-auto overscroll-contain py-1"
+        style={{
+          maxHeight: Math.max(
+            96,
+            dropPos.maxPanelHeight - (searchable ? 50 : 8)
+          ),
+        }}
+      >
         {filtered.length === 0 && (
           <li className="px-4 py-3 text-xs text-surface-400 text-center">Tidak ditemukan</li>
         )}
@@ -155,13 +189,14 @@ export default function SelectDropdown({
   )
 
   return (
-    <div ref={containerRef} className={`relative inline-block ${className}`}>
+    <div ref={containerRef} className={`relative inline-block ${fullWidth ? 'w-full' : ''} ${className}`}>
       {/* Trigger */}
       <button
         type="button"
         onClick={toggle}
         className={[
           'inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-semibold transition-all select-none',
+          fullWidth ? 'w-full justify-between' : '',
           activeTriggerClass,
         ].join(' ')}
       >

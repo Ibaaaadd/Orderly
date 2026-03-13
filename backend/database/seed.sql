@@ -5,7 +5,7 @@
 -- ============================================================
 
 -- ── Truncate existing data (preserve sequences start) ────────────
-TRUNCATE TABLE payments, order_items, orders, menus, categories RESTART IDENTITY CASCADE;
+TRUNCATE TABLE payments, order_item_package_selections, package_menu_rule_items, package_menu_rules, order_items, orders, menus, categories RESTART IDENTITY CASCADE;
 
 -- ════════════════════════════════════════════════════════════════
 --  CATEGORIES
@@ -80,11 +80,46 @@ INSERT INTO menus (category_id, name, price, image_url, is_available) VALUES
   (6, 'Nasi Pecel',             17000, 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400', TRUE);
 
 -- Paket (7)
-INSERT INTO menus (category_id, name, price, image_url, is_available) VALUES
-  (7, 'Paket Hemat A',          35000, 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400', TRUE),
-  (7, 'Paket Hemat B',          40000, 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400', TRUE),
-  (7, 'Paket Keluarga',         95000, 'https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?w=400', TRUE),
-  (7, 'Paket Sarapan Duo',      28000, 'https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=400', TRUE);
+INSERT INTO menus (category_id, name, price, image_url, is_available, is_package) VALUES
+  (7, 'Paket Hemat A',          35000, 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400', TRUE, TRUE),
+  (7, 'Paket Hemat B',          40000, 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400', TRUE, TRUE),
+  (7, 'Paket Keluarga',         95000, 'https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?w=400', TRUE, TRUE),
+  (7, 'Paket Sarapan Duo',      28000, 'https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=400', TRUE, TRUE);
+
+-- Sederhanakan paket: 1 rule "Isi Paket" per menu paket.
+INSERT INTO package_menu_rules (package_menu_id, rule_name, sort_order)
+SELECT id, 'Isi Paket', 0
+FROM menus
+WHERE is_package = TRUE;
+
+-- Komposisi paket ditentukan admin dari menu existing.
+INSERT INTO package_menu_rule_items (
+  package_menu_rule_id,
+  selected_menu_id,
+  selected_level,
+  qty,
+  sort_order
+)
+SELECT r.id, m.id, src.level_name, src.qty, src.sort_order
+FROM package_menu_rules r
+JOIN menus pkg ON pkg.id = r.package_menu_id
+JOIN (
+  VALUES
+    ('Paket Hemat A', 'Nasi Goreng Spesial', NULL, 1, 1),
+    ('Paket Hemat A', 'Es Teh Manis', NULL, 1, 2),
+    ('Paket Hemat A', 'Kentang Goreng', NULL, 1, 3),
+    ('Paket Hemat B', 'Ayam Geprek Sambal', NULL, 1, 1),
+    ('Paket Hemat B', 'Jus Mangga Segar', NULL, 1, 2),
+    ('Paket Hemat B', 'Tahu Crispy', NULL, 1, 3),
+    ('Paket Keluarga', 'Ayam Bakar Madu', 'Pedas', 2, 1),
+    ('Paket Keluarga', 'Nasi Rendang', NULL, 1, 2),
+    ('Paket Keluarga', 'Es Lemon Tea', NULL, 2, 3),
+    ('Paket Keluarga', 'Onion Ring', NULL, 2, 4),
+    ('Paket Sarapan Duo', 'Nasi Kuning Komplit', NULL, 1, 1),
+    ('Paket Sarapan Duo', 'Teh Tarik', NULL, 1, 2)
+) AS src(package_name, item_name, level_name, qty, sort_order)
+  ON src.package_name = pkg.name
+JOIN menus m ON m.name = src.item_name;
 
 -- ════════════════════════════════════════════════════════════════
 --  HELPER: insert_order function (avoids repetition)

@@ -35,6 +35,7 @@ export default function CartPage() {
   const [loading,   setLoading]   = useState(false)
   const [nameError, setNameError] = useState('')
   const [phoneError, setPhoneError] = useState('')
+  const [tableError, setTableError] = useState('')
 
   const isEmpty = items.length === 0
 
@@ -49,6 +50,11 @@ export default function CartPage() {
       return
     }
     setPhoneError('')
+    if (orderType === 'dine_in' && !tableNumber.trim()) {
+      setTableError('Nomor meja wajib diisi untuk makan di tempat')
+      return
+    }
+    setTableError('')
     setLoading(true)
 
     try {
@@ -58,7 +64,14 @@ export default function CartPage() {
         customer_email: customerEmail.trim() || undefined,
         table_number:   tableNumber.trim() || undefined,
         order_type:     orderType,
-        items: items.map((i) => ({ menu_id: i.id, qty: i.qty, ...(i.level ? { level: i.level } : {}) })),
+        items: items.map((i) => ({
+          menu_id: i.id,
+          qty: i.qty,
+          ...(i.level ? { level: i.level } : {}),
+          ...(Array.isArray(i.package_selections) && i.package_selections.length > 0
+            ? { package_selections: i.package_selections }
+            : {}),
+        })),
       })
       clearCart()
       navigate(`/payment/${order.data.id}`)
@@ -138,10 +151,15 @@ export default function CartPage() {
               fullWidth
             />
             <Input
-              label="Nomor Meja (opsional)"
+              label={orderType === 'dine_in' ? 'Nomor Meja' : 'Nomor Meja (opsional)'}
               placeholder="Contoh: 5"
               value={tableNumber}
-              onChange={(e) => setTableNumber(e.target.value)}
+              onChange={(e) => {
+                setTableNumber(e.target.value)
+                if (tableError) setTableError('')
+              }}
+              error={tableError}
+              helperText={orderType === 'dine_in' ? 'Wajib untuk pesanan makan di tempat' : undefined}
               fullWidth
             />
 
@@ -162,7 +180,10 @@ export default function CartPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setOrderType('takeaway')}
+                  onClick={() => {
+                    setOrderType('takeaway')
+                    if (tableError) setTableError('')
+                  }}
                   className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-colors ${
                     orderType === 'takeaway'
                       ? 'bg-primary-500 text-white border-primary-500'

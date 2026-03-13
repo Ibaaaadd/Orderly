@@ -5,6 +5,20 @@ import { formatPrice } from '../../utils/formatPrice'
 const STATUS_LABEL = { pending: 'Menunggu', paid: 'Lunas', cancelled: 'Dibatalkan' }
 const ORDER_TYPE_LABEL = { dine_in: 'Makan di tempat', takeaway: 'Dibawa pulang' }
 
+function normalizePackageSelections(item) {
+  const value = item?.package_selections
+  if (Array.isArray(value)) return value
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+  return []
+}
+
 /** Escape HTML entities for use inside the print popup */
 function esc(str) {
   return String(str ?? '')
@@ -23,11 +37,21 @@ export default function Receipt({ order, onClose }) {
   const items = order.items ?? []
 
   function handlePrint() {
-    const itemRows = items.map((item) => `
+    const itemRows = items.map((item) => {
+      const selections = normalizePackageSelections(item)
+      const packageRows = selections.map((selection) => `
+        <div style="display:flex;justify-content:space-between;gap:8px;margin:3px 0 0 16px;color:#555;">
+          <span style="flex:1;">↳ ${esc(selection.menu_name ?? 'Item Paket')}${selection.selected_level ? ` <span style="font-size:11px;color:#888;">(Level ${esc(selection.selected_level)})</span>` : ''}</span>
+          <span style="white-space:nowrap;font-size:12px;">×${selection.qty ?? 1}</span>
+        </div>`).join('')
+
+      return `
       <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:5px;">
         <span style="flex:1;">${esc(item.name ?? item.menu_name ?? 'Item')} ×${item.qty ?? item.quantity ?? 1}${item.level ? ` <span style="font-size:11px;color:#888;">(Level ${esc(item.level)})</span>` : ''}</span>
         <span style="white-space:nowrap;">${formatPrice(Number(item.subtotal))}</span>
-      </div>`).join('')
+      </div>
+      ${packageRows}`
+    }).join('')
 
     const html = `<!DOCTYPE html>
 <html><head>
@@ -134,13 +158,27 @@ export default function Receipt({ order, onClose }) {
             {items.length === 0
               ? <p className="text-sm text-surface-400">—</p>
               : items.map((item, i) => (
-                <div key={i} className="flex justify-between gap-2 text-sm">
-                  <span className="flex-1 text-surface-700">
-                    {item.name ?? item.menu_name ?? 'Item'}
-                    <span className="text-surface-400"> ×{item.qty ?? item.quantity}</span>
-                    {item.level && <span className="ml-1 text-[11px] text-surface-400">(Level {item.level})</span>}
-                  </span>
-                  <span className="shrink-0 font-medium text-surface-800">{formatPrice(Number(item.subtotal))}</span>
+                <div key={i} className="text-sm">
+                  <div className="flex justify-between gap-2">
+                    <span className="flex-1 text-surface-700">
+                      {item.name ?? item.menu_name ?? 'Item'}
+                      <span className="text-surface-400"> ×{item.qty ?? item.quantity}</span>
+                      {item.level && <span className="ml-1 text-[11px] text-surface-400">(Level {item.level})</span>}
+                    </span>
+                    <span className="shrink-0 font-medium text-surface-800">{formatPrice(Number(item.subtotal))}</span>
+                  </div>
+
+                  {normalizePackageSelections(item).length > 0 && (
+                    <div className="mt-1.5 ml-4 space-y-1">
+                      {normalizePackageSelections(item).map((selection) => (
+                        <p key={selection.id || `${selection.menu_id}-${selection.menu_name}-${selection.qty}`} className="text-xs text-surface-500">
+                          ↳ {selection.menu_name || 'Item Paket'}
+                          {selection.selected_level ? ` (Level ${selection.selected_level})` : ''}
+                          <span className="text-surface-400"> ×{selection.qty ?? 1}</span>
+                        </p>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))
             }

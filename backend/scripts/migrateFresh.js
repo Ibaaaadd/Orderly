@@ -17,6 +17,9 @@ async function fresh() {
   await pool.query(`
     TRUNCATE TABLE
       payments,
+      order_item_package_selections,
+      package_menu_rule_items,
+      package_menu_rules,
       order_items,
       orders,
       menus,

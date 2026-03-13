@@ -2,6 +2,90 @@ const orderModel = require('../models/orderModel')
 const menuModel  = require('../models/menuModel')
 const { calculateTotal } = require('../utils/calculateTotal')
 
+function parsePositiveInt(value) {
+  const n = parseInt(value, 10)
+  return Number.isInteger(n) && n > 0 ? n : null
+}
+
+function pickSmallestLevel(levels = []) {
+  const normalized = Array.isArray(levels)
+    ? levels.map((level) => String(level).trim()).filter(Boolean)
+    : []
+
+  if (normalized.length === 0) return null
+
+  return [...normalized].sort((a, b) => {
+    const numA = Number(a)
+    const numB = Number(b)
+    const isNumA = !Number.isNaN(numA)
+    const isNumB = !Number.isNaN(numB)
+
+    if (isNumA && isNumB) return numA - numB
+    if (isNumA) return -1
+    if (isNumB) return 1
+    return a.localeCompare(b, 'id', { numeric: true, sensitivity: 'base' })
+  })[0]
+}
+
+async function normalizePackageSelections({ packageMenu, orderQty, rawSelections }) {
+  const rules = await menuModel.getPackageRules(packageMenu.id)
+  if (!rules.length) {
+    throw new Error(`Menu paket "${packageMenu.name}" belum punya aturan komposisi paket`) // handled by caller
+  }
+
+  const configuredSelections = rules.flatMap((rule) => {
+    const items = Array.isArray(rule.configured_items) ? rule.configured_items : []
+    return items.map((item) => ({
+      package_menu_rule_id: rule.id,
+      selected_menu_id: item.selected_menu_id || null,
+      selected_menu_name: item.selected_menu_name || null,
+      selected_level: item.selected_level || null,
+      qty: (parsePositiveInt(item.qty) || 1) * orderQty,
+    }))
+  })
+
+  if (configuredSelections.length === 0) {
+    throw new Error(`Menu paket "${packageMenu.name}" belum punya isi paket yang dikonfigurasi admin`)
+  }
+
+  // Customer-side package detail is ignored by design; package composition is admin-fixed.
+  if (Array.isArray(rawSelections) && rawSelections.length > 0) {
+    // no-op, kept for backward compatibility
+  }
+
+  const menuIds = configuredSelections
+    .map((selection) => parsePositiveInt(selection.selected_menu_id))
+    .filter(Boolean)
+  const existingMenus = await menuModel.findByIds(menuIds)
+  const menusById = new Map(existingMenus.map((menu) => [menu.id, menu]))
+
+  for (const selection of configuredSelections) {
+    const selectedMenu = menusById.get(selection.selected_menu_id)
+    if (!selectedMenu) {
+      throw new Error(`Isi paket untuk "${packageMenu.name}" memiliki menu yang sudah tidak tersedia`)
+    }
+    if (!selectedMenu.is_available) {
+      throw new Error(`Menu "${selectedMenu.name}" pada paket "${packageMenu.name}" sedang tidak tersedia`)
+    }
+    if (!selection.selected_menu_name) {
+      selection.selected_menu_name = selectedMenu.name
+    }
+    if (Array.isArray(selectedMenu.levels) && selectedMenu.levels.length > 0) {
+      const smallestLevel = pickSmallestLevel(selectedMenu.levels)
+
+      if (!selection.selected_level) {
+        selection.selected_level = smallestLevel
+      }
+
+      if (selection.selected_level && !selectedMenu.levels.includes(selection.selected_level)) {
+        selection.selected_level = smallestLevel
+      }
+    }
+  }
+
+  return configuredSelections
+}
+
 /**
  * POST /api/orders
  *
@@ -59,7 +143,27 @@ async function createOrder(req, res, next) {
         }
       }
 
-      enriched.push({ menu_id: menu.id, menu_name: menu.name, price: menu.price, qty, level: item.level || null })
+      let package_selections = []
+      if (menu.is_package) {
+        try {
+          package_selections = await normalizePackageSelections({
+            packageMenu: menu,
+            orderQty: qty,
+            rawSelections: item.package_selections,
+          })
+        } catch (error) {
+          return res.status(400).json({ success: false, message: error.message })
+        }
+      }
+
+      enriched.push({
+        menu_id: menu.id,
+        menu_name: menu.name,
+        price: menu.price,
+        qty,
+        level: item.level || null,
+        package_selections,
+      })
     }
 
     // ── Calculate total ────────────────────────────────────────────

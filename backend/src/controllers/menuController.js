@@ -8,7 +8,7 @@ async function getMenus(req, res, next) {
   try {
     const { category_id, search, page = '1', limit = '10' } = req.query
     const pageNum  = Math.max(1, parseInt(page, 10) || 1)
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 10))
+    const limitNum = Math.min(500, Math.max(1, parseInt(limit, 10) || 10))
 
     const { rows, total } = await menuModel.findAll({
       category_id: category_id ? parseInt(category_id, 10) : undefined,
@@ -49,7 +49,7 @@ async function getMenuById(req, res, next) {
  */
 async function createMenu(req, res, next) {
   try {
-    const { category_id, name, price, image_url, is_available, levels } = req.body
+    const { category_id, name, price, image_url, is_available, is_package, levels, package_rules } = req.body
     if (!name || !name.trim()) {
       return res.status(400).json({ success: false, message: 'Nama menu wajib diisi' })
     }
@@ -60,7 +60,13 @@ async function createMenu(req, res, next) {
     if (levels !== undefined && !Array.isArray(levels)) {
       return res.status(400).json({ success: false, message: 'levels harus berupa array' })
     }
-    const menu = await menuModel.create({ category_id, name: name.trim(), price: numericPrice, image_url, is_available, levels: levels || [] })
+    if (is_package !== undefined && typeof is_package !== 'boolean') {
+      return res.status(400).json({ success: false, message: 'is_package harus boolean' })
+    }
+    if (package_rules !== undefined && !Array.isArray(package_rules)) {
+      return res.status(400).json({ success: false, message: 'package_rules harus berupa array' })
+    }
+    const menu = await menuModel.create({ category_id, name: name.trim(), price: numericPrice, image_url, is_available, is_package, levels: levels || [], package_rules })
     res.status(201).json({ success: true, data: menu })
   } catch (err) {
     next(err)
@@ -83,6 +89,12 @@ async function updateMenu(req, res, next) {
     }
     if (fields.levels !== undefined && !Array.isArray(fields.levels)) {
       return res.status(400).json({ success: false, message: 'levels harus berupa array' })
+    }
+    if (fields.is_package !== undefined && typeof fields.is_package !== 'boolean') {
+      return res.status(400).json({ success: false, message: 'is_package harus boolean' })
+    }
+    if (fields.package_rules !== undefined && !Array.isArray(fields.package_rules)) {
+      return res.status(400).json({ success: false, message: 'package_rules harus berupa array' })
     }
     const menu = await menuModel.update(id, fields)
     if (!menu) {

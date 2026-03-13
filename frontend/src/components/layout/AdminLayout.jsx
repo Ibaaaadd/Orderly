@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { LayoutDashboard, ChefHat, Tag, ClipboardList, TrendingUp, BookOpen, UtensilsCrossed } from 'lucide-react'
 
@@ -11,6 +11,18 @@ const navItems = [
 ]
 
 export default function AdminLayout() {
+  useEffect(() => {
+    const previousBodyOverflow = document.body.style.overflow
+    const previousHtmlOverflow = document.documentElement.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow
+      document.documentElement.style.overflow = previousHtmlOverflow
+    }
+  }, [])
+
   return (
     <div className="flex h-screen overflow-hidden bg-surface-50">
       {/* Sidebar */}
@@ -59,7 +71,10 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto">
+      <main
+        className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden"
+        style={{ scrollbarGutter: 'stable' }}
+      >
         <Outlet />
       </main>
     </div>

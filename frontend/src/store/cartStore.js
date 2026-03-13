@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { serializePackageSelections } from '../utils/packageSelections.js'
 
 /**
  * Cart store using Zustand with localStorage persistence.
@@ -46,7 +47,9 @@ const useCartStore = create(
       addItem: (menu) =>
         set((state) => {
           const level   = menu.level || ''
-          const cartKey = `${menu.id}::${level}`
+          const packageSelections = Array.isArray(menu.package_selections) ? menu.package_selections : []
+          const packageKey = serializePackageSelections(packageSelections)
+          const cartKey = `${menu.id}::${level}::${packageKey}`
           const existing = state.items.find((i) => i.cartKey === cartKey)
           let items
           if (existing) {
@@ -67,6 +70,8 @@ const useCartStore = create(
                 image_url: menu.image_url,
                 levels:    Array.isArray(menu.levels) ? menu.levels : [],
                 level:     level || undefined,
+                is_package: menu.is_package === true,
+                package_selections: packageSelections,
                 qty:       1,
                 subtotal:  price,
               },
@@ -100,7 +105,8 @@ const useCartStore = create(
         set((state) => {
           const item = state.items.find((i) => i.cartKey === cartKey)
           if (!item) return {}
-          const newCartKey = `${item.id}::${newLevel}`
+          const packageKey = serializePackageSelections(item.package_selections)
+          const newCartKey = `${item.id}::${newLevel}::${packageKey}`
           // If an entry with the new level already exists, merge qty into it
           const existing = state.items.find((i) => i.cartKey === newCartKey)
           let items

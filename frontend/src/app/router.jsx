@@ -13,6 +13,7 @@ import KitchenPage from '../pages/KitchenPage.jsx'
 // Lazy-load admin pages to split heavy chart / print libraries into a separate chunk
 const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage.jsx'))
 const AdminMenuPage      = lazy(() => import('../pages/admin/AdminMenuPage.jsx'))
+const AdminMenuFormPage  = lazy(() => import('../pages/admin/AdminMenuFormPage.jsx'))
 const AdminCategoryPage  = lazy(() => import('../pages/admin/AdminCategoryPage.jsx'))
 const AdminOrdersPage    = lazy(() => import('../pages/admin/AdminOrdersPage.jsx'))
 const AdminReportPage    = lazy(() => import('../pages/admin/AdminReportPage.jsx'))
@@ -74,6 +75,8 @@ export const router = createBrowserRouter([
     children: [
       { index: true,         element: <Suspense fallback={<AdminFallback />}><AdminDashboardPage /></Suspense> },
       { path: 'menus',       element: <Suspense fallback={<AdminFallback />}><AdminMenuPage /></Suspense> },
+      { path: 'menus/new',   element: <Suspense fallback={<AdminFallback />}><AdminMenuFormPage /></Suspense> },
+      { path: 'menus/:id/edit', element: <Suspense fallback={<AdminFallback />}><AdminMenuFormPage /></Suspense> },
       { path: 'categories',  element: <Suspense fallback={<AdminFallback />}><AdminCategoryPage /></Suspense> },
       { path: 'orders',      element: <Suspense fallback={<AdminFallback />}><AdminOrdersPage /></Suspense> },
       { path: 'reports',     element: <Suspense fallback={<AdminFallback />}><AdminReportPage /></Suspense> },

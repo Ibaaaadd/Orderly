@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
-import { Plus, X } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { formatPrice } from '../../utils/formatPrice.js'
 import useCartStore from '../../store/cartStore.js'
 
@@ -20,6 +20,13 @@ export default function MenuCard({ menu }) {
   const [showPicker, setShowPicker] = useState(false)
 
   const hasLevels = Array.isArray(menu.levels) && menu.levels.length > 0
+  const packageRules = Array.isArray(menu.package_rules) ? menu.package_rules : []
+  const isPackageMenu = menu.is_package === true || String(menu.category_name || '').toLowerCase() === 'paket'
+  const packagePreview = packageRules
+    .flatMap((rule) => Array.isArray(rule.configured_items) ? rule.configured_items : [])
+    .slice(0, 2)
+    .map((item) => item.selected_menu_name || item.custom_input_name)
+    .filter(Boolean)
 
   const handleAdd = (e) => {
     e.stopPropagation()
@@ -35,6 +42,7 @@ export default function MenuCard({ menu }) {
     addItem({ ...menu, level })
     setShowPicker(false)
   }
+
 
   return (
     <>
@@ -78,6 +86,12 @@ export default function MenuCard({ menu }) {
             </span>
           )}
 
+          {isPackageMenu && (
+            <span className="absolute bottom-2 left-2 bg-indigo-600 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow">
+              Paket Admin
+            </span>
+          )}
+
           {/* Unavailable overlay */}
           {!menu.is_available && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -91,6 +105,13 @@ export default function MenuCard({ menu }) {
         {/* Info */}
         <div className="p-3">
           <h3 className="font-semibold text-sm text-zinc-800 truncate">{menu.name}</h3>
+          {isPackageMenu && (
+            <p className="mt-1 min-h-[2rem] text-[11px] leading-4 text-zinc-500">
+              {packagePreview.length > 0
+                ? `Isi paket: ${packagePreview.join(', ')}${packageRules.flatMap((rule) => Array.isArray(rule.configured_items) ? rule.configured_items : []).length > 2 ? ', ...' : ''}`
+                : 'Isi paket ditentukan admin.'}
+            </p>
+          )}
           <div className="flex items-center justify-between mt-1.5">
             <span className="text-primary-600 font-bold text-sm">
               {formatPrice(menu.price)}

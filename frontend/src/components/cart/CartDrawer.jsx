@@ -39,12 +39,14 @@ export default function CartDrawer() {
   const [loading,    setLoading]    = useState(false)
   const [nameError,  setNameError]  = useState('')
   const [phoneError, setPhoneError] = useState('')
+  const [tableError, setTableError] = useState('')
 
   const isEmpty = items.length === 0
 
   function openCheckoutModal() {
     setNameError('')
     setPhoneError('')
+    setTableError('')
     setModalOpen(true)
   }
 
@@ -59,6 +61,11 @@ export default function CartDrawer() {
       return
     }
     setPhoneError('')
+    if (orderType === 'dine_in' && !tableNumber.trim()) {
+      setTableError('Nomor meja wajib diisi untuk makan di tempat')
+      return
+    }
+    setTableError('')
 
     setLoading(true)
     try {
@@ -67,7 +74,14 @@ export default function CartDrawer() {
         customer_phone: customerPhone.trim() || undefined,
         table_number:   tableNumber.trim() || undefined,
         order_type:     orderType,
-        items: items.map((i) => ({ menu_id: i.id, qty: i.qty, ...(i.level ? { level: i.level } : {}) })),
+        items: items.map((i) => ({
+          menu_id: i.id,
+          qty: i.qty,
+          ...(i.level ? { level: i.level } : {}),
+          ...(Array.isArray(i.package_selections) && i.package_selections.length > 0
+            ? { package_selections: i.package_selections }
+            : {}),
+        })),
       })
       clearCart()
       closeCart()
@@ -195,10 +209,15 @@ export default function CartDrawer() {
           {/* Table number – only shown for dine in */}
           {orderType === 'dine_in' && (
             <Input
-              label="Nomor Meja (opsional)"
+              label="Nomor Meja"
               placeholder="Contoh: 5"
               value={tableNumber}
-              onChange={(e) => setTableNumber(e.target.value)}
+              onChange={(e) => {
+                setTableNumber(e.target.value)
+                if (tableError) setTableError('')
+              }}
+              error={tableError}
+              helperText="Wajib untuk pesanan makan di tempat"
               fullWidth
             />
           )}
@@ -221,7 +240,10 @@ export default function CartDrawer() {
               </button>
               <button
                 type="button"
-                onClick={() => setOrderType('takeaway')}
+                onClick={() => {
+                  setOrderType('takeaway')
+                  if (tableError) setTableError('')
+                }}
                 className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-colors ${
                   orderType === 'takeaway'
                     ? 'bg-primary-500 text-white border-primary-500'
