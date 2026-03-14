@@ -12,6 +12,22 @@ DROP TABLE IF EXISTS order_items   CASCADE;
 DROP TABLE IF EXISTS orders        CASCADE;
 DROP TABLE IF EXISTS menus         CASCADE;
 DROP TABLE IF EXISTS categories    CASCADE;
+DROP TABLE IF EXISTS users         CASCADE;
+
+-- ── users ─────────────────────────────────────────────────────────
+CREATE TABLE users (
+  id             SERIAL PRIMARY KEY,
+  username       VARCHAR(100) NOT NULL UNIQUE,
+  password_hash  TEXT         NOT NULL,
+  full_name      VARCHAR(200) NOT NULL,
+  role           VARCHAR(30)  NOT NULL DEFAULT 'admin'
+                 CHECK (role IN ('admin', 'kitchen', 'cashier')),
+  is_active      BOOLEAN      NOT NULL DEFAULT TRUE,
+  created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  updated_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_users_role_active ON users(role, is_active);
 
 -- ── categories ────────────────────────────────────────────────────
 CREATE TABLE categories (

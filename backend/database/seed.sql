@@ -5,7 +5,29 @@
 -- ============================================================
 
 -- ── Truncate existing data (preserve sequences start) ────────────
-TRUNCATE TABLE payments, order_item_package_selections, package_menu_rule_items, package_menu_rules, order_items, orders, menus, categories RESTART IDENTITY CASCADE;
+TRUNCATE TABLE payments, order_item_package_selections, package_menu_rule_items, package_menu_rules, order_items, orders, menus, categories, users RESTART IDENTITY CASCADE;
+
+-- ════════════════════════════════════════════════════════════════
+--  USERS
+--  Password defaults:
+--    admin / admin123
+--    kitchen / kitchen123
+-- ════════════════════════════════════════════════════════════════
+INSERT INTO users (username, password_hash, full_name, role, is_active) VALUES
+  (
+    'admin',
+    'pbkdf2_sha512$100000$b476303e4b2a35f51deb9009bf2fa8b8$bd144f12cf23770bbb549cbff9bbdc4dea3f0e4abcffc25915d0aa3408eddbc9f6fb8a8d75289e698dcd95c022181b48adf2f92dd6e208b3c01415c000d36cc0',
+    'Administrator',
+    'admin',
+    TRUE
+  ),
+  (
+    'kitchen',
+    'pbkdf2_sha512$100000$89d11d800c64dabf81181284acd4f36a$f89e0a94b9c7cb4df908206eb7b1ceb81cc20ab842619ced9ced9f30fa8bd994cec6e3ffa64e1a6d0045334038edf2a0d7b58aad992be83356a7ca4af6e96720',
+    'Kitchen Staff',
+    'kitchen',
+    TRUE
+  );
 
 -- ════════════════════════════════════════════════════════════════
 --  CATEGORIES

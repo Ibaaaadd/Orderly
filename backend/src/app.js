@@ -11,6 +11,7 @@ const menuRoutes     = require('./routes/menuRoutes')
 const orderRoutes    = require('./routes/orderRoutes')
 const paymentRoutes  = require('./routes/paymentRoutes')
 const reportRoutes   = require('./routes/reportRoutes')
+const authRoutes     = require('./routes/authRoutes')
 const { errorHandler } = require('./middleware/errorHandler')
 
 const app = express()
@@ -65,6 +66,7 @@ app.use('/api/menus',      menuRoutes)
 app.use('/api/orders',     orderRoutes)
 app.use('/api/payments',   paymentRoutes)
 app.use('/api/reports',    reportRoutes)
+app.use('/api/auth',       authRoutes)
 
 // ── 404 handler ───────────────────────────────────────────────────
 app.use((_req, res) => {

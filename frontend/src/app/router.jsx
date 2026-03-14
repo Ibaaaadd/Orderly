@@ -9,6 +9,7 @@ import PaymentPage from '../pages/PaymentPage.jsx'
 import SuccessPage from '../pages/SuccessPage.jsx'
 import OrdersPage from '../pages/OrdersPage.jsx'
 import KitchenPage from '../pages/KitchenPage.jsx'
+import RequireAdminAuth from '../components/auth/RequireAdminAuth.jsx'
 
 // Lazy-load admin pages to split heavy chart / print libraries into a separate chunk
 const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage.jsx'))
@@ -17,6 +18,7 @@ const AdminMenuFormPage  = lazy(() => import('../pages/admin/AdminMenuFormPage.j
 const AdminCategoryPage  = lazy(() => import('../pages/admin/AdminCategoryPage.jsx'))
 const AdminOrdersPage    = lazy(() => import('../pages/admin/AdminOrdersPage.jsx'))
 const AdminReportPage    = lazy(() => import('../pages/admin/AdminReportPage.jsx'))
+const AdminLoginPage     = lazy(() => import('../pages/admin/AdminLoginPage.jsx'))
 
 function AdminFallback() {
   return (
@@ -43,7 +45,7 @@ function RootLayout({ children }) {
 }
 
 // Route-level layouts are handled via Outlet in react-router v6
-import { Outlet } from 'react-router-dom'
+import { Navigate, Outlet } from 'react-router-dom'
 
 function Layout() {
   return (
@@ -67,19 +69,33 @@ export const router = createBrowserRouter([
   },
   {
     path: '/kitchen',
-    element: <KitchenPage />,
+    element: <Navigate to="/admin/kitchen" replace />,
   },
   {
     path: '/admin',
-    element: <AdminLayout />,
     children: [
-      { index: true,         element: <Suspense fallback={<AdminFallback />}><AdminDashboardPage /></Suspense> },
-      { path: 'menus',       element: <Suspense fallback={<AdminFallback />}><AdminMenuPage /></Suspense> },
-      { path: 'menus/new',   element: <Suspense fallback={<AdminFallback />}><AdminMenuFormPage /></Suspense> },
-      { path: 'menus/:id/edit', element: <Suspense fallback={<AdminFallback />}><AdminMenuFormPage /></Suspense> },
-      { path: 'categories',  element: <Suspense fallback={<AdminFallback />}><AdminCategoryPage /></Suspense> },
-      { path: 'orders',      element: <Suspense fallback={<AdminFallback />}><AdminOrdersPage /></Suspense> },
-      { path: 'reports',     element: <Suspense fallback={<AdminFallback />}><AdminReportPage /></Suspense> },
+      {
+        path: 'login',
+        element: <Suspense fallback={<AdminFallback />}><AdminLoginPage /></Suspense>,
+      },
+      {
+        element: <RequireAdminAuth />,
+        children: [
+          {
+            element: <AdminLayout />,
+            children: [
+              { index: true,         element: <Suspense fallback={<AdminFallback />}><AdminDashboardPage /></Suspense> },
+              { path: 'menus',       element: <Suspense fallback={<AdminFallback />}><AdminMenuPage /></Suspense> },
+              { path: 'menus/new',   element: <Suspense fallback={<AdminFallback />}><AdminMenuFormPage /></Suspense> },
+              { path: 'menus/:id/edit', element: <Suspense fallback={<AdminFallback />}><AdminMenuFormPage /></Suspense> },
+              { path: 'categories',  element: <Suspense fallback={<AdminFallback />}><AdminCategoryPage /></Suspense> },
+              { path: 'orders',      element: <Suspense fallback={<AdminFallback />}><AdminOrdersPage /></Suspense> },
+              { path: 'reports',     element: <Suspense fallback={<AdminFallback />}><AdminReportPage /></Suspense> },
+              { path: 'kitchen',     element: <KitchenPage /> },
+            ],
+          },
+        ],
+      },
     ],
   },
 ])

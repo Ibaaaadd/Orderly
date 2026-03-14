@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
-import { LayoutDashboard, ChefHat, Tag, ClipboardList, TrendingUp, BookOpen, UtensilsCrossed } from 'lucide-react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { LayoutDashboard, ChefHat, Tag, ClipboardList, TrendingUp, BookOpen, UtensilsCrossed, LogOut } from 'lucide-react'
+import { logoutAdmin } from '../../utils/adminAuth.js'
 
 const navItems = [
   { to: '/admin',            label: 'Dashboard',        Icon: LayoutDashboard, end: true },
@@ -8,9 +9,12 @@ const navItems = [
   { to: '/admin/menus',      label: 'Menu',             Icon: BookOpen },
   { to: '/admin/categories', label: 'Kategori',         Icon: Tag },
   { to: '/admin/reports',    label: 'Laporan Keuangan', Icon: TrendingUp },
+  { to: '/admin/kitchen',    label: 'Kitchen Display',  Icon: UtensilsCrossed },
 ]
 
 export default function AdminLayout() {
+  const navigate = useNavigate()
+
   useEffect(() => {
     const previousBodyOverflow = document.body.style.overflow
     const previousHtmlOverflow = document.documentElement.style.overflow
@@ -22,6 +26,11 @@ export default function AdminLayout() {
       document.documentElement.style.overflow = previousHtmlOverflow
     }
   }, [])
+
+  function handleLogout() {
+    logoutAdmin()
+    navigate('/admin/login', { replace: true })
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-surface-50">
@@ -54,13 +63,14 @@ export default function AdminLayout() {
         </nav>
 
         <div className="p-3 border-t border-surface-200">
-          <NavLink
-            to="/kitchen"
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-orange-600 hover:bg-orange-50 transition-colors"
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
           >
-            <UtensilsCrossed size={18} />
-            Kitchen Display
-          </NavLink>
+            <LogOut size={18} />
+            Logout Admin
+          </button>
           <NavLink
             to="/"
             className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-surface-500 hover:bg-surface-100 hover:text-surface-700 transition-colors"

@@ -23,7 +23,8 @@ async function fresh() {
       order_items,
       orders,
       menus,
-      categories
+      categories,
+      users
     RESTART IDENTITY CASCADE
   `)
   console.log('[migrate:fresh] All data cleared ✓')

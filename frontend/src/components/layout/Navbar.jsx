@@ -48,10 +48,10 @@ export default function Navbar() {
 
           {/* Kitchen display */}
           <Link
-            to="/kitchen"
+            to="/admin/kitchen"
             className={[
               'p-2 rounded-xl transition-colors',
-              pathname === '/kitchen'
+              pathname.startsWith('/admin/kitchen')
                 ? 'bg-orange-50 text-orange-600'
                 : 'text-zinc-500 hover:bg-surface-100 hover:text-zinc-700',
             ].join(' ')}

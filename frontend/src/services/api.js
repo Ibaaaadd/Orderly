@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getAdminToken, logoutAdmin } from '../utils/adminAuth.js'
 
 /**
  * Axios instance – base URL points to the Express backend.
@@ -14,7 +15,14 @@ const api = axios.create({
 
 // ---------- Request interceptor ----------
 api.interceptors.request.use(
-  (config) => config,
+  (config) => {
+    const token = getAdminToken()
+    if (token) {
+      config.headers = config.headers || {}
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
   (error) => Promise.reject(error)
 )
 
@@ -22,6 +30,10 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response.data,
   (error) => {
+    if (error.response?.status === 401) {
+      logoutAdmin()
+    }
+
     const message =
       error.response?.data?.message ||
       error.response?.data?.error ||
