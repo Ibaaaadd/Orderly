@@ -27,6 +27,8 @@ export default function SelectDropdown({
   className = '',
   searchable = true,
   fullWidth = false,
+  showAllOption = true,
+  neutralTrigger = false,
 }) {
   const [open, setOpen]         = useState(false)
   const [query, setQuery]       = useState('')
@@ -65,7 +67,7 @@ export default function SelectDropdown({
   }, [open])
 
   const allOption  = { value: '', label: allLabel, icon: allIcon }
-  const allOptions = [allOption, ...options]
+  const allOptions = showAllOption ? [allOption, ...options] : options
 
   const selected   = allOptions.find((o) => String(o.value) === String(value)) ?? allOption
 
@@ -112,9 +114,12 @@ export default function SelectDropdown({
   }
 
   // Use option's activeClass when a specific value is selected
-  const activeTriggerClass = value
-    ? (selected.activeClass ?? 'bg-primary-600 text-white border-primary-600 shadow-sm')
-    : 'bg-white text-surface-700 border-surface-200 hover:border-surface-300 hover:bg-surface-50'
+  const neutralClass = 'bg-white text-surface-700 border-surface-200 hover:border-surface-300 hover:bg-surface-50'
+  const activeTriggerClass = neutralTrigger
+    ? neutralClass
+    : value
+      ? (selected.activeClass ?? 'bg-primary-600 text-white border-primary-600 shadow-sm')
+      : neutralClass
 
   const panel = open && createPortal(
     <div
@@ -201,14 +206,14 @@ export default function SelectDropdown({
         ].join(' ')}
       >
         {selected.icon && (
-          <span className={value ? 'text-white/90' : 'text-surface-400'}>
+          <span className={(!neutralTrigger && value) ? 'text-white/90' : 'text-surface-400'}>
             {selected.icon}
           </span>
         )}
         <span>{placeholder && !value ? placeholder : selected.label}</span>
         <ChevronDown
           size={13}
-          className={`transition-transform shrink-0 ${open ? 'rotate-180' : ''} ${value ? 'text-white/70' : 'text-surface-400'}`}
+          className={`transition-transform shrink-0 ${open ? 'rotate-180' : ''} ${(!neutralTrigger && value) ? 'text-white/70' : 'text-surface-400'}`}
         />
       </button>
 

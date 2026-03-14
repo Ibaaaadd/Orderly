@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ChefHat, LockKeyhole, LogIn, User } from 'lucide-react'
+import { ArrowLeft, ChefHat, LockKeyhole, LogIn, User } from 'lucide-react'
 import { isAdminAuthenticated, setAdminSession } from '../../utils/adminAuth.js'
 import authService from '../../services/authService.js'
 
@@ -47,77 +47,83 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50 via-amber-50 to-white px-4 py-10">
-      <div className="mx-auto w-full max-w-md">
-        <div className="rounded-3xl border border-orange-100 bg-white shadow-xl overflow-hidden">
-          <div className="bg-gradient-to-r from-orange-600 to-amber-500 px-6 py-6 text-white">
-            <div className="flex items-center gap-3">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/20">
-                <ChefHat size={22} />
-              </span>
-              <div>
-                <p className="text-sm font-medium text-orange-100">Orderly</p>
-                <h1 className="text-xl font-extrabold tracking-tight">Admin Login</h1>
-              </div>
-            </div>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[linear-gradient(180deg,_#fffaf5_0%,_#fff7ed_100%)] px-4 py-8 sm:px-6">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute left-1/2 top-0 h-72 w-72 -translate-x-1/2 rounded-full bg-orange-100/70 blur-3xl" />
+        <div className="absolute bottom-[-8rem] right-[-4rem] h-64 w-64 rounded-full bg-amber-100/60 blur-3xl" />
+      </div>
+
+      <div className="relative w-full max-w-md rounded-[2rem] border border-orange-100/80 bg-white/90 p-6 shadow-[0_22px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:p-8">
+        <div className="mb-8 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-[linear-gradient(135deg,_#c2410c_0%,_#f59e0b_100%)] text-white shadow-[0_14px_30px_rgba(234,88,12,0.18)]">
+            <ChefHat size={28} />
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4 p-6">
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-semibold text-zinc-700">Username</span>
-              <div className="flex items-center rounded-xl border border-zinc-200 bg-zinc-50 px-3 focus-within:border-orange-300 focus-within:bg-white">
-                <User size={16} className="text-zinc-400" />
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="h-11 w-full bg-transparent px-2 text-sm text-zinc-800 outline-none"
-                  placeholder="Masukkan username admin"
-                  autoComplete="username"
-                  required
-                />
-              </div>
-            </label>
-
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-semibold text-zinc-700">Password</span>
-              <div className="flex items-center rounded-xl border border-zinc-200 bg-zinc-50 px-3 focus-within:border-orange-300 focus-within:bg-white">
-                <LockKeyhole size={16} className="text-zinc-400" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-11 w-full bg-transparent px-2 text-sm text-zinc-800 outline-none"
-                  placeholder="Masukkan password"
-                  autoComplete="current-password"
-                  required
-                />
-              </div>
-            </label>
-
-            {error && (
-              <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
-                {error}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-orange-600 text-sm font-bold text-white transition-colors hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <LogIn size={16} />
-              {submitting ? 'Memproses...' : 'Masuk ke Admin'}
-            </button>
-
-            <Link
-              to="/"
-              className="inline-flex w-full items-center justify-center text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-700"
-            >
-              Kembali ke aplikasi utama
-            </Link>
-          </form>
+          <p className="mt-5 text-xs font-semibold uppercase tracking-[0.3em] text-orange-500">Orderly Admin</p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight text-zinc-950">Masuk ke dashboard</h1>
+          <p className="mt-3 text-sm leading-6 text-zinc-500">
+            Gunakan akun yang terdaftar di tabel users untuk membuka area admin dan kitchen.
+          </p>
         </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-zinc-700">Username</span>
+                <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 transition-colors focus-within:border-orange-400 focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(251,146,60,0.14)]">
+                  <User size={18} className="text-zinc-400" />
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="h-14 w-full bg-transparent text-sm font-medium text-zinc-800 outline-none"
+                    placeholder="Masukkan username admin"
+                    autoComplete="username"
+                    required
+                  />
+                </div>
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-zinc-700">Password</span>
+                <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 transition-colors focus-within:border-orange-400 focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(251,146,60,0.14)]">
+                  <LockKeyhole size={18} className="text-zinc-400" />
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="h-14 w-full bg-transparent text-sm font-medium text-zinc-800 outline-none"
+                    placeholder="Masukkan password"
+                    autoComplete="current-password"
+                    required
+                  />
+                </div>
+              </label>
+
+              {error && (
+                <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(135deg,_#c2410c_0%,_#ea580c_52%,_#f59e0b_100%)] text-sm font-bold text-white shadow-[0_16px_30px_rgba(234,88,12,0.28)] transition-all hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <LogIn size={18} />
+                {submitting ? 'Memproses...' : 'Masuk ke Admin'}
+              </button>
+
+              <div className="flex items-center justify-between gap-4 border-t border-zinc-100 pt-4 text-sm">
+                <p className="text-zinc-400">Akses hanya untuk user terdaftar.</p>
+                <Link
+                  to="/"
+                  className="inline-flex items-center gap-2 font-semibold text-zinc-600 transition-colors hover:text-orange-600"
+                >
+                  <ArrowLeft size={16} />
+                  Kembali
+                </Link>
+              </div>
+        </form>
       </div>
     </div>
   )

@@ -19,6 +19,7 @@ const AdminCategoryPage  = lazy(() => import('../pages/admin/AdminCategoryPage.j
 const AdminOrdersPage    = lazy(() => import('../pages/admin/AdminOrdersPage.jsx'))
 const AdminReportPage    = lazy(() => import('../pages/admin/AdminReportPage.jsx'))
 const AdminLoginPage     = lazy(() => import('../pages/admin/AdminLoginPage.jsx'))
+const AdminUsersPage     = lazy(() => import('../pages/admin/AdminUsersPage.jsx'))
 
 function AdminFallback() {
   return (
@@ -90,6 +91,7 @@ export const router = createBrowserRouter([
               { path: 'menus/:id/edit', element: <Suspense fallback={<AdminFallback />}><AdminMenuFormPage /></Suspense> },
               { path: 'categories',  element: <Suspense fallback={<AdminFallback />}><AdminCategoryPage /></Suspense> },
               { path: 'orders',      element: <Suspense fallback={<AdminFallback />}><AdminOrdersPage /></Suspense> },
+              { path: 'users',       element: <Suspense fallback={<AdminFallback />}><AdminUsersPage /></Suspense> },
               { path: 'reports',     element: <Suspense fallback={<AdminFallback />}><AdminReportPage /></Suspense> },
               { path: 'kitchen',     element: <KitchenPage /> },
             ],

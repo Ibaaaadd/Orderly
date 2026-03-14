@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, ChefHat, Tag, ClipboardList, TrendingUp, BookOpen, UtensilsCrossed, LogOut } from 'lucide-react'
+import { LayoutDashboard, ChefHat, Tag, ClipboardList, TrendingUp, BookOpen, UtensilsCrossed, LogOut, Users } from 'lucide-react'
 import { logoutAdmin } from '../../utils/adminAuth.js'
 
 const navItems = [
   { to: '/admin',            label: 'Dashboard',        Icon: LayoutDashboard, end: true },
   { to: '/admin/orders',     label: 'Pesanan',          Icon: ClipboardList },
+  { to: '/admin/users',      label: 'Users',            Icon: Users },
   { to: '/admin/menus',      label: 'Menu',             Icon: BookOpen },
   { to: '/admin/categories', label: 'Kategori',         Icon: Tag },
   { to: '/admin/reports',    label: 'Laporan Keuangan', Icon: TrendingUp },

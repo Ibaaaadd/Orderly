@@ -22,3 +22,9 @@ export const getReportSummary   = ()     => api.get('/reports/summary')
 export const getMonthlyReport   = (year) => api.get('/reports/monthly', { params: { year } })
 export const getTopMenus        = (limit = 10) => api.get('/reports/top-menus', { params: { limit } })
 export const getDailyReport     = (year, month) => api.get('/reports/daily', { params: { year, month } })
+
+// ─── Users ────────────────────────────────────────────────────
+export const getUsers    = () => api.get('/users')
+export const createUser  = (data) => api.post('/users', data)
+export const updateUser  = (id, data) => api.put(`/users/${id}`, data)
+export const deleteUser  = (id) => api.delete(`/users/${id}`)
