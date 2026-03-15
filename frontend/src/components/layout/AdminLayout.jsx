@@ -5,12 +5,12 @@ import { logoutAdmin } from '../../utils/adminAuth.js'
 
 const navItems = [
   { to: '/admin',            label: 'Dashboard',        Icon: LayoutDashboard, end: true },
-  { to: '/admin/orders',     label: 'Pesanan',          Icon: ClipboardList },
-  { to: '/admin/users',      label: 'Users',            Icon: Users },
-  { to: '/admin/menus',      label: 'Menu',             Icon: BookOpen },
   { to: '/admin/categories', label: 'Kategori',         Icon: Tag },
+  { to: '/admin/menus',      label: 'Menu',             Icon: BookOpen },
+  { to: '/admin/orders',     label: 'Pesanan',          Icon: ClipboardList },   
   { to: '/admin/reports',    label: 'Laporan Keuangan', Icon: TrendingUp },
   { to: '/admin/kitchen',    label: 'Kitchen Display',  Icon: UtensilsCrossed },
+  { to: '/admin/users',      label: 'Users',            Icon: Users },
 ]
 
 export default function AdminLayout() {
@@ -70,7 +70,7 @@ export default function AdminLayout() {
             className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
           >
             <LogOut size={18} />
-            Logout Admin
+            Logout
           </button>
           <NavLink
             to="/"

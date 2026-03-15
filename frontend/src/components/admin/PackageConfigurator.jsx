@@ -60,10 +60,16 @@ function normalizeConfiguredItems(value = []) {
 
 function buildPackageRules(items = [], menus = []) {
   const normalizedItems = ensureArray(items).map((item, index) => {
+    const normalizedLevel =
+      item?.selected_level !== undefined && item?.selected_level !== null && String(item.selected_level).trim()
+        ? String(item.selected_level).trim()
+        : ''
+
     return {
       ...createConfiguredItem(),
       ...item,
       selected_menu_id: Number(item.selected_menu_id) || null,
+      selected_level: normalizedLevel,
       qty: Number(item.qty) > 0 ? Number(item.qty) : 1,
       sort_order: index,
     }

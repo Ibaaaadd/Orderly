@@ -4,8 +4,8 @@ import {
   ChefHat, Clock, RefreshCw, CheckCircle2, Utensils,
   Package, AlertCircle, Wifi, WifiOff, Bike,
 } from 'lucide-react'
-import api from '../services/api.js'
-import { formatPrice } from '../utils/formatPrice.js'
+import api from '../../services/api.js'
+import { formatPrice } from '../../utils/formatPrice.js'
 
 const REFRESH_INTERVAL = 20_000 // 20 seconds
 
@@ -193,7 +193,7 @@ function LiveClock() {
   )
 }
 
-export default function KitchenPage() {
+export default function AdminKitchenPage() {
   const [queueOrders,  setQueueOrders]  = useState([])  // status = paid
   const [doneOrders,   setDoneOrders]   = useState([])  // status = ready
   const [deliveredCount, setDeliveredCount] = useState(0) // status = completed today
@@ -268,17 +268,17 @@ export default function KitchenPage() {
   const doneCount  = doneOrders.length
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
+    <div className="min-h-screen bg-surface-50 text-surface-800">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-zinc-900 border-b border-zinc-800 shadow-xl">
+      <header className="sticky top-0 z-10 bg-white border-b border-surface-200 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="bg-orange-500 rounded-xl p-2">
               <ChefHat size={20} />
             </div>
             <div>
-              <h1 className="font-extrabold text-lg leading-tight tracking-tight">Kitchen Display</h1>
-              <p className="text-xs text-zinc-400 leading-none">Order List</p>
+              <h1 className="font-extrabold text-lg leading-tight tracking-tight text-surface-800">Kitchen Display</h1>
+              <p className="text-xs text-surface-500 leading-none">Order List</p>
             </div>
           </div>
 
@@ -287,14 +287,14 @@ export default function KitchenPage() {
             <LiveClock />
 
             {/* Online indicator */}
-            <span className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${online ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400' : 'border-red-500/30 bg-red-500/10 text-red-400'}`}>
+            <span className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${online ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-red-200 bg-red-50 text-red-600'}`}>
               {online ? <Wifi size={12} /> : <WifiOff size={12} />}
               {online ? 'Live' : 'Offline'}
             </span>
 
             {/* Last refresh */}
             {lastRefresh && (
-              <span className="text-xs text-zinc-500 hidden sm:block">
+              <span className="text-xs text-surface-500 hidden sm:block">
                 Diperbarui {lastRefresh.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </span>
             )}
@@ -302,7 +302,7 @@ export default function KitchenPage() {
             {/* Manual refresh */}
             <button
               onClick={() => fetchOrders()}
-              className="p-2 rounded-xl hover:bg-zinc-700 transition-colors text-zinc-400 hover:text-white"
+              className="p-2 rounded-xl hover:bg-surface-100 transition-colors text-surface-500 hover:text-surface-700"
               title="Refresh"
             >
               <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
@@ -314,34 +314,34 @@ export default function KitchenPage() {
       <div className="max-w-6xl mx-auto px-4 py-5">
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-3 mb-5">
-          <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 text-center">
+          <div className="rounded-2xl bg-white border border-surface-200 p-4 text-center shadow-soft">
             <p className="text-3xl font-extrabold text-orange-400">{queueCount}</p>
-            <p className="text-xs text-zinc-400 mt-0.5 font-medium">Antrian Masak</p>
+            <p className="text-xs text-surface-500 mt-0.5 font-medium">Antrian Masak</p>
           </div>
-          <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 text-center">
+          <div className="rounded-2xl bg-white border border-surface-200 p-4 text-center shadow-soft">
             <p className="text-3xl font-extrabold text-emerald-400">{doneCount}</p>
-            <p className="text-xs text-zinc-400 mt-0.5 font-medium">Siap Antar</p>
+            <p className="text-xs text-surface-500 mt-0.5 font-medium">Siap Antar</p>
           </div>
-          <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 text-center">
+          <div className="rounded-2xl bg-white border border-surface-200 p-4 text-center shadow-soft">
             <p className="text-3xl font-extrabold text-blue-400">{deliveredCount}</p>
-            <p className="text-xs text-zinc-400 mt-0.5 font-medium">Sudah Diantar</p>
+            <p className="text-xs text-surface-500 mt-0.5 font-medium">Sudah Diantar</p>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-zinc-900 border border-zinc-800 rounded-2xl p-1 mb-5">
+        <div className="flex gap-1 bg-white border border-surface-200 rounded-2xl p-1 mb-5">
           <button
             onClick={() => setActiveTab('queue')}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${
               activeTab === 'queue'
                 ? 'bg-orange-500 text-white shadow'
-                : 'text-zinc-400 hover:text-white'
+                : 'text-surface-500 hover:text-surface-700 hover:bg-surface-100'
             }`}
           >
             <Clock size={16} />
             Antrian
             {queueCount > 0 && (
-              <span className={`text-xs font-extrabold px-1.5 py-0.5 rounded-full ${activeTab === 'queue' ? 'bg-white/20' : 'bg-orange-500/20 text-orange-400'}`}>
+              <span className={`text-xs font-extrabold px-1.5 py-0.5 rounded-full ${activeTab === 'queue' ? 'bg-white/20' : 'bg-orange-100 text-orange-700'}`}>
                 {queueCount}
               </span>
             )}
@@ -351,13 +351,13 @@ export default function KitchenPage() {
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${
               activeTab === 'done'
                 ? 'bg-emerald-600 text-white shadow'
-                : 'text-zinc-400 hover:text-white'
+                : 'text-surface-500 hover:text-surface-700 hover:bg-surface-100'
             }`}
           >
             <CheckCircle2 size={16} />
             Selesai
             {doneCount > 0 && (
-              <span className={`text-xs font-extrabold px-1.5 py-0.5 rounded-full ${activeTab === 'done' ? 'bg-white/20' : 'bg-emerald-500/20 text-emerald-400'}`}>
+              <span className={`text-xs font-extrabold px-1.5 py-0.5 rounded-full ${activeTab === 'done' ? 'bg-white/20' : 'bg-emerald-100 text-emerald-700'}`}>
                 {doneCount}
               </span>
             )}
@@ -368,7 +368,7 @@ export default function KitchenPage() {
         {loading && queueOrders.length === 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="rounded-2xl border-2 border-zinc-800 bg-zinc-900 animate-pulse h-48" />
+              <div key={i} className="rounded-2xl border-2 border-surface-200 bg-white animate-pulse h-48" />
             ))}
           </div>
         ) : (
@@ -386,12 +386,12 @@ export default function KitchenPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="flex flex-col items-center justify-center py-24 gap-4 text-center"
                   >
-                    <div className="w-20 h-20 rounded-2xl bg-zinc-800 flex items-center justify-center">
-                      <ChefHat size={36} className="text-zinc-600" />
+                    <div className="w-20 h-20 rounded-2xl bg-surface-100 flex items-center justify-center">
+                      <ChefHat size={36} className="text-surface-400" />
                     </div>
                     <div>
-                      <p className="text-lg font-bold text-zinc-300">Tidak ada antrian</p>
-                      <p className="text-sm text-zinc-500 mt-1">Semua pesanan sudah diproses</p>
+                      <p className="text-lg font-bold text-surface-700">Tidak ada antrian</p>
+                      <p className="text-sm text-surface-500 mt-1">Semua pesanan sudah diproses</p>
                     </div>
                   </motion.div>
                 ) : (
@@ -424,12 +424,12 @@ export default function KitchenPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="flex flex-col items-center justify-center py-24 gap-4 text-center"
                   >
-                    <div className="w-20 h-20 rounded-2xl bg-zinc-800 flex items-center justify-center">
-                      <CheckCircle2 size={36} className="text-zinc-600" />
+                    <div className="w-20 h-20 rounded-2xl bg-surface-100 flex items-center justify-center">
+                      <CheckCircle2 size={36} className="text-surface-400" />
                     </div>
                     <div>
-                      <p className="text-lg font-bold text-zinc-300">Belum ada pesanan selesai</p>
-                      <p className="text-sm text-zinc-500 mt-1">Pesanan yang sudah siap akan muncul di sini</p>
+                      <p className="text-lg font-bold text-surface-700">Belum ada pesanan selesai</p>
+                      <p className="text-sm text-surface-500 mt-1">Pesanan yang sudah siap akan muncul di sini</p>
                     </div>
                   </motion.div>
                 ) : (

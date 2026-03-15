@@ -108,6 +108,7 @@ const menuModel = {
                               'selected_menu_name', mi.name,
                               'selected_category_id', mi.category_id,
                               'selected_category_name', ic.name,
+                              'selected_menu_levels', mi.levels,
                               'selected_level', item.selected_level,
                               'qty', item.qty,
                               'sort_order', item.sort_order
@@ -157,6 +158,7 @@ const menuModel = {
                               'selected_menu_name', mi.name,
                               'selected_category_id', mi.category_id,
                               'selected_category_name', ic.name,
+                              'selected_menu_levels', mi.levels,
                               'selected_level', item.selected_level,
                               'qty', item.qty,
                               'sort_order', item.sort_order
@@ -214,6 +216,7 @@ const menuModel = {
                       'selected_menu_name', mi.name,
                       'selected_category_id', mi.category_id,
                       'selected_category_name', ic.name,
+                      'selected_menu_levels', mi.levels,
                       'selected_level', item.selected_level,
                       'qty', item.qty,
                       'sort_order', item.sort_order

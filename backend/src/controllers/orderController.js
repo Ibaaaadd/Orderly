@@ -14,6 +14,10 @@ function pickSmallestLevel(levels = []) {
 
   if (normalized.length === 0) return null
 
+  // Prefer level 1 as default when available.
+  const levelOne = normalized.find((level) => Number(level) === 1)
+  if (levelOne) return levelOne
+
   return [...normalized].sort((a, b) => {
     const numA = Number(a)
     const numB = Number(b)

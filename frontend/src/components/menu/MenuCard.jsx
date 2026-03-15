@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
-import { Plus } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { formatPrice } from '../../utils/formatPrice.js'
 import useCartStore from '../../store/cartStore.js'
 
@@ -18,6 +18,7 @@ export default function MenuCard({ menu }) {
   )
 
   const [showPicker, setShowPicker] = useState(false)
+  const [showPackageDetail, setShowPackageDetail] = useState(false)
 
   const hasLevels = Array.isArray(menu.levels) && menu.levels.length > 0
   const packageRules = Array.isArray(menu.package_rules) ? menu.package_rules : []
@@ -27,15 +28,42 @@ export default function MenuCard({ menu }) {
     .slice(0, 2)
     .map((item) => item.selected_menu_name || item.custom_input_name)
     .filter(Boolean)
+  const packageItems = packageRules
+    .flatMap((rule) => Array.isArray(rule.configured_items) ? rule.configured_items : [])
+    .map((item) => {
+      const levels = Array.isArray(item.selected_menu_levels)
+        ? item.selected_menu_levels.map((val) => String(val)).filter(Boolean)
+        : []
+      const defaultLevel = item.selected_level
+        || levels.find((level) => Number(level) === 1)
+        || levels[0]
+        || null
+
+      return {
+        name: item.selected_menu_name || item.custom_input_name || 'Item Paket',
+        qty: item.qty ?? 1,
+        level: defaultLevel,
+        levels,
+      }
+    })
 
   const handleAdd = (e) => {
     e.stopPropagation()
     if (!menu.is_available) return
+    if (isPackageMenu) {
+      setShowPackageDetail(true)
+      return
+    }
     if (hasLevels) {
       setShowPicker(true)
     } else {
       addItem(menu)
     }
+  }
+
+  const handleConfirmPackage = () => {
+    addItem(menu)
+    setShowPackageDetail(false)
   }
 
   const handleSelectLevel = (level) => {
@@ -166,6 +194,71 @@ export default function MenuCard({ menu }) {
                   {level}
                 </button>
               ))}
+            </div>
+          </motion.div>
+        </div>,
+        document.body
+      )}
+
+      {/* Package detail modal */}
+      {isPackageMenu && showPackageDetail && createPortal(
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowPackageDetail(false)}
+          />
+          <motion.div
+            initial={{ opacity: 0, y: 30, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            className="relative bg-white rounded-3xl shadow-strong w-full max-w-sm m-4 p-5 z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <p className="font-bold text-zinc-800">{menu.name}</p>
+                <p className="text-xs text-zinc-500 mt-0.5">Detail isi paket</p>
+              </div>
+              <button
+                onClick={() => setShowPackageDetail(false)}
+                className="p-1.5 rounded-lg hover:bg-surface-100 text-zinc-400 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {packageItems.length > 0 ? (
+              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                {packageItems.map((item, index) => (
+                  <div
+                    key={`${item.name}-${index}`}
+                    className="flex items-center justify-between rounded-xl border border-surface-200 bg-surface-50 px-3 py-2"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-zinc-700 truncate">{item.name}</p>
+                      {item.level && (
+                        <p className="text-xs text-zinc-500">Level {item.level}</p>
+                      )}
+                    </div>
+                    <span className="ml-3 text-xs font-bold text-zinc-600">x{item.qty}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                Isi paket belum dikonfigurasi admin.
+              </div>
+            )}
+
+            <div className="mt-5 flex items-center justify-between gap-3">
+              <span className="text-sm font-bold text-primary-600">{formatPrice(menu.price)}</span>
+              <button
+                type="button"
+                onClick={handleConfirmPackage}
+                disabled={packageItems.length === 0}
+                className="inline-flex items-center justify-center rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Masukkan ke Keranjang
+              </button>
             </div>
           </motion.div>
         </div>,
