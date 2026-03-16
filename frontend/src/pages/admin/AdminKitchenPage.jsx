@@ -2,8 +2,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChefHat, Clock, RefreshCw, CheckCircle2, Utensils,
-  Package, AlertCircle, Wifi, WifiOff, Bike,
+  Package, AlertCircle, Wifi, WifiOff, Bike, ArrowLeft,
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import api from '../../services/api.js'
 import { formatPrice } from '../../utils/formatPrice.js'
 
@@ -187,7 +188,7 @@ function LiveClock() {
     return () => clearInterval(t)
   }, [])
   return (
-    <span className="text-sm font-mono text-zinc-500">
+    <span className="text-sm font-mono text-zinc-300 tabular-nums">
       {time.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
     </span>
   )
@@ -270,43 +271,61 @@ export default function AdminKitchenPage() {
   return (
     <div className="min-h-screen bg-surface-50 text-surface-800">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-white border-b border-surface-200 shadow-sm">
+      <header className="sticky top-0 z-10 bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 shadow-xl">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+          {/* Left: branding */}
           <div className="flex items-center gap-3">
-            <div className="bg-orange-500 rounded-xl p-2">
-              <ChefHat size={20} />
+            <div className="bg-orange-500 rounded-xl p-2 shadow-lg shadow-orange-500/30">
+              <ChefHat size={20} className="text-white" />
             </div>
             <div>
-              <h1 className="font-extrabold text-lg leading-tight tracking-tight text-surface-800">Kitchen Display</h1>
-              <p className="text-xs text-surface-500 leading-none">Order List</p>
+              <h1 className="font-extrabold text-lg leading-tight tracking-tight text-white">Kitchen Display</h1>
+              <p className="text-xs text-zinc-400 leading-none font-medium">Order List</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Right: status + controls */}
+          <div className="flex items-center gap-2">
             {/* Live clock */}
             <LiveClock />
 
             {/* Online indicator */}
-            <span className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${online ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-red-200 bg-red-50 text-red-600'}`}>
+            <span className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${
+              online
+                ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400'
+                : 'border-red-500/40 bg-red-500/10 text-red-400'
+            }`}>
               {online ? <Wifi size={12} /> : <WifiOff size={12} />}
               {online ? 'Live' : 'Offline'}
             </span>
 
             {/* Last refresh */}
             {lastRefresh && (
-              <span className="text-xs text-surface-500 hidden sm:block">
-                Diperbarui {lastRefresh.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              <span className="text-xs text-zinc-500 hidden sm:block tabular-nums">
+                {lastRefresh.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </span>
             )}
 
             {/* Manual refresh */}
             <button
               onClick={() => fetchOrders()}
-              className="p-2 rounded-xl hover:bg-surface-100 transition-colors text-surface-500 hover:text-surface-700"
+              className="p-2 rounded-xl hover:bg-white/10 transition-colors text-zinc-400 hover:text-white"
               title="Refresh"
             >
               <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
             </button>
+
+            {/* Divider */}
+            <span className="w-px h-5 bg-zinc-700" />
+
+            {/* Back to admin */}
+            <Link
+              to="/admin"
+              className="flex items-center gap-1.5 text-xs font-semibold text-zinc-400 hover:text-white px-2.5 py-1.5 rounded-xl hover:bg-white/10 transition-colors"
+            >
+              <ArrowLeft size={14} />
+              Admin
+            </Link>
           </div>
         </div>
       </header>

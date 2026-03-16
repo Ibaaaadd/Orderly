@@ -82,6 +82,11 @@ export const router = createBrowserRouter([
       {
         element: <RequireAdminAuth />,
         children: [
+          // Kitchen Display — standalone full-screen, no sidebar
+          {
+            path: 'kitchen',
+            element: <Suspense fallback={<AdminFallback />}><AdminKitchenPage /></Suspense>,
+          },
           {
             element: <AdminLayout />,
             children: [
@@ -93,7 +98,6 @@ export const router = createBrowserRouter([
               { path: 'orders',      element: <Suspense fallback={<AdminFallback />}><AdminOrdersPage /></Suspense> },
               { path: 'users',       element: <Suspense fallback={<AdminFallback />}><AdminUsersPage /></Suspense> },
               { path: 'reports',     element: <Suspense fallback={<AdminFallback />}><AdminReportPage /></Suspense> },
-              { path: 'kitchen',     element: <Suspense fallback={<AdminFallback />}><AdminKitchenPage /></Suspense> },
             ],
           },
         ],
